@@ -46,7 +46,7 @@ module.exports = {
         return oldJson;
     },
 
-    async allBuyer(oldData, data, hash) {
+    async allShopper(oldData, data, hash) {
        
         let avgRating = await this.getAverageRating(data.sellerToShopperReviews)
        

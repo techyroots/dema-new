@@ -4,14 +4,14 @@ const Contract = require("../contract/index")
 const fs = require('fs')
 const path = require('path');
 const productUtils = require('./../productReview/utils')
-const buyerUtils = require("./../buyerReview/utils")
+const shopperUtils = require("./../shopperReview/utils")
 const sellerUtils = require("./../sellerReview/utils")
 
 module.exports = {
     async uploadProduct(review, id) {
         fs.writeFileSync(path.join(__dirname, '../../../data.json'), JSON.stringify(review));
         const isUploaded = await IpfsService.pinJSONToIPFS('ProductInfomation1' + id);
-        const allProductOldJson = []
+        const allProductOldJson = [];
         const allProductOldHash = await Contract.getAllProductReview();
 
         if (allProductOldHash !== 0 && allProductOldHash !== "0") {
@@ -26,18 +26,18 @@ module.exports = {
     },
     async uploadShopper(review, id) {
         fs.writeFileSync(path.join(__dirname, '../../../data.json'), JSON.stringify(review));
-        const isUploaded = await IpfsService.pinJSONToIPFS('BuyerInfomation1' + id);
+        const isUploaded = await IpfsService.pinJSONToIPFS('ShopperInfomation1' + id);
         const allShoppersOldJson = []
-        const allShoppersOldHash = await Contract.getAllBuyerReview();
+        const allShoppersOldHash = await Contract.getAllShopperReview();
         if (allShoppersOldHash !== 0 && allShoppersOldHash !== "0") {
             allShoppersOldJson = JSON.parse(await IpfsService.gateway(allShoppersOldHash));
         }
         console.log(allShoppersOldJson, review, isUploaded.key, "xdfghukj")
-        const generateAllShopper = await buyerUtils.allBuyer(allShoppersOldJson, review, isUploaded.key);
+        const generateAllShopper = await shopperUtils.allShopper(allShoppersOldJson, review, isUploaded.key);
         console.log(generateAllShopper, "generateAllShopper")
         fs.writeFileSync(path.join(__dirname, '../../../data.json'), JSON.stringify(generateAllShopper));
 
-        const isUploadedAll = await IpfsService.pinJSONToIPFS('AllBuyerInfomation1');
+        const isUploadedAll = await IpfsService.pinJSONToIPFS('AllShopperInfomation1');
         return ([isUploaded.key, isUploadedAll.key]);
     },
     async uploadSeller(review, id) {

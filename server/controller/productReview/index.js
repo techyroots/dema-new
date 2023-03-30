@@ -5,89 +5,102 @@ const Validator = require("../../helpers/validators");
 const productValidate = require("./validation")
 
 module.exports = {
-    async handleProductReviews(req, res) {
+    async createProduct(req, res) {
         try {
-            const data = Validator.checkValidation(req.body);
-            if (!data.success) {
-                return res.status(201).send({ success: false, msg: "Missing field", data: {}, errors: '' });
+          const { error } = productValidate.create(req.body);
+          if (error) {
+            return res.status(400).json({ success: false, message: error.message, data: null, error });
+          }
+      
+          const { id, name, image, desc, sellerId, sellerName } = req.body;
+          const productHash = await Contract.viewProductReview(Number(id));
+      
+          if (!productHash.length) {
+            const productCreated = await productService.create(id, name, image, desc, sellerId, sellerName);
+            return res.status(200).json(productCreated);
+          } else {
+            return res.status(400).json({ success: false, message: "Product ID already exists", data: null, error: null });
+          }
+        } catch (error) {
+          return res.status(500).json({ success: false, message: error.message, data: null, error });
+        }
+      }
+      ,
+      async productReviews(req, res) {
+        try {
+          const { error } = productValidate.product(req.body);
+          if (error) {
+            return res.status(400).json({ success: false, message: error.message, data: null, error });
+          }
+      
+          const { id, sellerId, reviewText, reviewerId, rating } = req.body;
+          const productHash = await Contract.viewProductReview(Number(id));
+      
+          if (productHash && productHash.length) {
+            const [oldProductJSON, oldShopperJSON, oldSellerJSON] = await Promise.all([
+              IpfsService.gateway(productHash),
+              Contract.viewShopperReview(Number(reviewerId)).then(IpfsService.gateway),
+              Contract.viewSellerReview(Number(sellerId)).then(IpfsService.gateway)
+            ]);
+            const reviewAdded = await productService.addReview(id, JSON.parse(oldProductJSON), reviewerId, reviewText, rating, JSON.parse(oldShopperJSON), sellerId, JSON.parse(oldSellerJSON));
+            return res.status(200).json({ success: true, message: "Review added successfully", data: reviewAdded, error: null });
+          } else {
+            return res.status(400).json({ success: false, message: "Product ID not exist", data: null, error: null });
+          }
+        } catch (error) {
+          return res.status(500).json({ success: false, message: error.message, data: null, error });
+        }
+      }
+      ,
+      async  productResponse(req, res) {
+        try {
+          const { error } = productValidate.productResponse(req.body);
+          if (error) {
+            return res.status(400).json({ success: false, message: error.message, data: null, error });
+          }
+      
+          const { id, reviewerId, reviewText, reviewerType, shopperId } = req.body;
+          const productHash = await Contract.viewProductReview(Number(id));
+      
+          if (!productHash || !productHash.length) {
+            return res.status(400).json({ success: false, message: "Product ID not exist", data: null, error: null });
+          }
+      
+          const getProductJSON = await IpfsService.gateway(productHash);
+          const responseAdded = await productService.response(JSON.parse(getProductJSON), id, reviewerId, reviewText, reviewerType, shopperId);
+          return res.status(200).json(responseAdded);
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message, data: null, error });
+        }
+      }
+      ,
+      async getProductReviews(req, res) {
+        try {
+            const productId = req.query.id;
+            if (!productId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Bad Request: Missing Product ID'
+                });
             }
-            const { id, name, image, desc, sellerId, reviewText, reviewerId, rating, sellerName } = data.data;
-            const validate = productValidate.product(data.data);
-            if (validate.error) {
-                throw new Error(validate.error.message);
-            }
-            const isIdExist = await Contract.isProductIdExist(Number(id));
-            console.log(isIdExist)
-            if (isIdExist && isIdExist.length) {
-                const [oldJSON, oldBuyerJSON, oldSellerJSON] = await Promise.all([
-                    IpfsService.gateway(isIdExist),
-                    Contract.isBuyerIdExist(Number(reviewerId)).then(IpfsService.gateway),
-                    Contract.isSellerIdExist(Number(sellerId)).then(IpfsService.gateway)
-                ]);
-                const reviewAdded = await productService.addReview(id, JSON.parse(oldJSON), reviewerId, reviewText, rating, JSON.parse(oldBuyerJSON), sellerId, JSON.parse(oldSellerJSON));
-                return res.status(200).send({ success: true, message: "success", data: reviewAdded, error: "" });
+    
+            const response = await productService.getData(productId);
+            if (response.success) {
+                return res.status(200).json(response);
             } else {
-                const isCreated = await productService.create(id, name, image, desc, sellerId, sellerName);
-                return res.status(200).send({ success: true, message: "success", data: isCreated, error: "" });
+                return res.status(400).json(response);
             }
         } catch (error) {
-            return res.status(203).send({ success: false, message: error.message, data: "", error: error.message });
+            return res.status(500).json({ success: false, message: error.message, data: null, error });
         }
-    },
-    async handleProductResponse(req, res) {
-        try {
-            let data = Validator.checkValidation(req.body);
-            console.log(data)
-            if (!data.success) {
-                return res.status(201).send({ success: false, msg: "Missing field", data: {}, errors: "" });
-            }
-            const validate = productValidate.productResponse(req.body)
-            if (validate.error) {
-                throw new Error(validate.error.message);
-            }
-            const { id, reviewerId, reviewText, reviewerType, buyerId } = req.body;
-            const isIdExist = await Contract.isProductIdExist(Number(id));
-            if (!isIdExist || !isIdExist.length) {
-                return res.status(203).send({ success: false, message: "Product ID does not exist", data: "", error: "" });
-            }
-            const getJSON = await IpfsService.gateway(isIdExist);
-            const isResponseAdded = await productService.response(JSON.parse(getJSON), id, reviewerId, reviewText, reviewerType, buyerId);
-            return res.status(200).send({ success: true, message: "success", data: isResponseAdded, error: "" });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).send({ success: false, message: "Internal Server Error", data: "", error: error.message });
-        }
-
-    },
-    async getProductReviews(req, res) {
-        try {
-            let data = Validator.checkValidation(req.query);
-            if (data['success'] == true) {
-                data = data['data'];
-            } else {
-                return res.status(201).send({ success: false, msg: "Missing field", data: {}, errors: '' });
-            }
-            console.log(data,data.id,"dgfhj")
-            if (data.id !== null && data.id !== undefined && data.id !== "" && !isNaN(data.id)) {
-                const response = await productService.getData(data.id);
-                if (response.success) {
-                    return res.status(200).send(response)
-                } else {
-                    return res.status(203).send(response)
-                }
-            }
-        } catch (error) {
-            console.log(error)
-            return res.status(203).send({ success: false, message: "Can't process your request right now! please try again later", data: "", err: "" })
-        }
-
-    },
+    }
+    ,
     async getAllData(req, res) {
         const data = await productService.getAllData();
         if (data.success) {
-            return res.status(200).send(data)
+            return res.status(200).json(data)
         } else {
-            return res.status(203).send(data)
+            return res.status(400).json(data)
         }
     }
 }

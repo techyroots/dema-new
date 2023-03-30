@@ -6,8 +6,8 @@ const common = require("./../common/common")
 module.exports = {
     async create(id, name, image, desc, sellerId, sellerName) {
         try {
-            const review = productUtils.create(id, name, image, desc, 0, sellerId, sellerName);
-            const result = await common.uploadProduct(review, id);
+            const product = productUtils.create(id, name, image, desc, 0, sellerId, sellerName);
+            const result = await common.uploadProduct(product, id);
             const saveHash = await Contract.createProduct(id, result[0], result[1]);
             if (saveHash) {
                 return { success: true, message: "Created SuccessFully", data: "", error: "" };
@@ -19,14 +19,14 @@ module.exports = {
             return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR Product 01" };
         }
     },
-    async addReview(id, productOldJson, reviewerId, reviewText, rating, buyerOldJson, sellerId, sellerOldJson) {
+    async addReview(id, productOldJson, reviewerId, reviewText, rating, shopperOldJson, sellerId, sellerOldJson) {
         try {
             const [isReviewAdded, isSellerReviewAdded, isShopperReviewAdded] = await Promise.all([
-                productUtils.addReview(productOldJson, reviewerId, reviewText, rating, buyerOldJson.name),
-                productUtils.addSellerBuyerReview(sellerOldJson, id, reviewerId, reviewText, rating, buyerOldJson.name),
-                productUtils.addSellerBuyerReview(buyerOldJson, id, reviewerId, reviewText, rating, buyerOldJson.name)
+                productUtils.addReview(productOldJson, reviewerId, reviewText, rating, shopperOldJson.name),
+                productUtils.addSellerShopperReview(sellerOldJson, id, reviewerId, reviewText, rating, shopperOldJson.name),
+                productUtils.addSellerShopperReview(shopperOldJson, id, reviewerId, reviewText, rating, shopperOldJson.name)
             ]);
-            console.log(isReviewAdded, isSellerReviewAdded, isShopperReviewAdded, "isReviewAdded, isSellerReviewAdded, isShopperReviewAdded")
+
             const [productInfo, sellerInfo, shopperInfo] = await Promise.all([
                 common.uploadProduct(isReviewAdded, id),
                 common.uploadSeller(isSellerReviewAdded, sellerId),
@@ -46,28 +46,28 @@ module.exports = {
         }
     }
     ,
-    async response(dataJson, productId, reviewerId, raviewerText, reviewerType, buyerId) {
+    async response(dataJson, productId, reviewerId, raviewerText, reviewerType, shopperId) {
         try {
-            const isBuyer = reviewerType == 1;
-            const isIdExist = isBuyer ? await Contract.isBuyerIdExist(Number(reviewerId)) : await Contract.isSellerIdExist(Number(reviewerId));
+            const isShopper = reviewerType == 1;
+            const isIdExist = isShopper ? await Contract.viewShopperReview(Number(reviewerId)) : await Contract.viewSellerReview(Number(reviewerId));
             const getOldJSON = await IpfsService.gateway(isIdExist);
             const oldJson = JSON.parse(getOldJSON);
-            const responseJson = await productUtils.addResponse(dataJson, reviewerId, raviewerText, reviewerType, buyerId, oldJson.name);
-            const [productInfo, buyerDataJson, sellerDataJson] = await Promise.all([
+            const responseJson = await productUtils.addResponse(dataJson, reviewerId, raviewerText, reviewerType, shopperId, oldJson.name);
+            const [productInfo, shopperDataJson, sellerDataJson] = await Promise.all([
                 common.uploadProduct(responseJson, productId),
-                Contract.isBuyerIdExist(Number(buyerId)).then(buyerData => IpfsService.gateway(buyerData).then(getBuyerJSON => JSON.parse(getBuyerJSON))),
-                Contract.isSellerIdExist(Number(dataJson.sellerId)).then(sellerData => IpfsService.gateway(sellerData).then(getSellerJSON => JSON.parse(getSellerJSON))),
+                Contract.viewShopperReview(Number(shopperId)).then(shopperData => IpfsService.gateway(shopperData).then(getShopperJSON => JSON.parse(getShopperJSON))),
+                Contract.viewSellerReview(Number(dataJson.sellerId)).then(sellerData => IpfsService.gateway(sellerData).then(getSellerJSON => JSON.parse(getSellerJSON))),
             ]);
 
-            const [buyerResponseData, sellerResponseData] = await Promise.all([productUtils.addBuyerSellerResponse(buyerDataJson, productId, raviewerText, reviewerType, oldJson.name, buyerId, reviewerId),
-            productUtils.addBuyerSellerResponse(sellerDataJson, productId, raviewerText, reviewerType, oldJson.name, buyerId, reviewerId)]);
+            const [shopperResponseData, sellerResponseData] = await Promise.all([productUtils.addShopperSellerResponse(shopperDataJson, productId, raviewerText, reviewerType, oldJson.name, shopperId, reviewerId),
+            productUtils.addShopperSellerResponse(sellerDataJson, productId, raviewerText, reviewerType, oldJson.name, shopperId, reviewerId)]);
 
             const [shopperInfo, sellerInfo] = await Promise.all([
-                common.uploadShopper(buyerResponseData, buyerId),
+                common.uploadShopper(shopperResponseData, shopperId),
                 common.uploadSeller(sellerResponseData, dataJson.sellerId),
             ]);
 
-            const saveHash = await Contract.addReviewReply(productId, dataJson.sellerId, buyerId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
+            const saveHash = await Contract.addReviewReply(productId, dataJson.sellerId, shopperId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
 
             if (saveHash) {
                 return { success: true, message: "Posted SuccessFully", data: "", error: "" };
@@ -85,7 +85,7 @@ module.exports = {
         }
     },
     async getData(id) {
-        const isIdExist = await Contract.isProductIdExist(Number(id))
+        const isIdExist = await Contract.viewProductReview(Number(id))
         if (isIdExist !== "0" && isIdExist !== 0) {
             const data = JSON.parse(await IpfsService.gateway(isIdExist));
             console.log(data, "DSf")

@@ -26,7 +26,7 @@ module.exports = {
         return oldJson;
     },
 
-    async addSellerBuyerReview(oldJson, id, reviewerId, reviewText, rating, reviewerName) {
+    async addSellerShopperReview(oldJson, id, reviewerId, reviewText, rating, reviewerName) {
         const index = oldJson.productReviews.findIndex((Obj) => Obj.productId === id);
         const reviewObj = {
             reviewerId,
@@ -65,9 +65,9 @@ module.exports = {
         return oldData;
     },
 
-    async addResponse(dataJson, reviewerId, reviewerText, reviewerType, buyerId, name) {
-        console.log(dataJson, reviewerId, reviewerText, reviewerType, buyerId, name, "tfytguhj")
-        const index = dataJson.reviews.findIndex((data) => data.reviewerId === buyerId);
+    async addResponse(dataJson, reviewerId, reviewerText, reviewerType, shopperId, name) {
+        console.log(dataJson, reviewerId, reviewerText, reviewerType, shopperId, name, "tfytguhj")
+        const index = dataJson.reviews.findIndex((data) => data.reviewerId === shopperId);
         if (index >= 0) {
             dataJson.reviews[index].responses.push({
                 reviewerId,
@@ -80,9 +80,9 @@ module.exports = {
         return dataJson;
     },
 
-    async addBuyerSellerResponse(dataJson, productId, reviewerText, reviewerType, name, buyerId, reviewerId) {
+    async addShopperSellerResponse(dataJson, productId, reviewerText, reviewerType, name, shopperId, reviewerId) {
         const index = dataJson.productReviews.findIndex((data) => Number(data.productId) === Number(productId));
-        const responseIndex = dataJson.productReviews[index].reviews.findIndex((data) => data.reviewerId === buyerId);
+        const responseIndex = dataJson.productReviews[index].reviews.findIndex((data) => data.reviewerId === shopperId);
 
         dataJson.productReviews[index].reviews[responseIndex].responses.push({
             reviewerId,

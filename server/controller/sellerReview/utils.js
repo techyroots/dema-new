@@ -30,7 +30,7 @@ module.exports = {
         return oldJson;
     }
     ,
-    async addBuyerReview(oldJson, id, reviewText, rating, name, productId) {      
+    async addShopperReview(oldJson, id, reviewText, rating, name, productId) {      
         oldJson.sellerToShopperReviews.push({
             productId: productId,
             reviewerId: id,
@@ -58,8 +58,8 @@ module.exports = {
         }
         return oldData;
     },
-    addResponse(dataJson, buyerId, reviewText, reviewerType, reviewerId, name) {
-        const Index = dataJson.shopperReviews.findIndex((data) => { return data.reviewerId == buyerId });
+    addResponse(dataJson, shopperId, reviewText, reviewerType, reviewerId, name) {
+        const Index = dataJson.shopperReviews.findIndex((data) => { return data.reviewerId == shopperId });
         if (Index >= 0) {
             dataJson.shopperReviews[Index].responses.push({
                 reviewerId: reviewerId,
@@ -71,7 +71,7 @@ module.exports = {
         }
         return dataJson;
     },
-    addBuyerResponse(dataJson, id, reviewText, reviewerType, reviewerId, name) {
+    addShopperResponse(dataJson, id, reviewText, reviewerType, reviewerId, name) {
         const Index = dataJson.sellerToShopperReviews.findIndex((data) => { return data.reviewerId == id });
         if (Index >= 0) {
             dataJson.sellerToShopperReviews[Index].responses.push({

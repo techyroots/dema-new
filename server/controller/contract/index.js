@@ -323,15 +323,15 @@ const web3 = new Web3(Web3.givenProvider || RPC);
 const myContract = new web3.eth.Contract(ABI, address);
 
 module.exports = {
-	async isProductIdExist(id) {
+	async viewProductReview(id) {
 		const isExist = await myContract.methods.viewProductReview(id).call();
 		return isExist;
 	},
-	async isSellerIdExist(id) {
+	async viewSellerReview(id) {
 		const isExist = await myContract.methods.viewSellerReview(id).call();
 		return isExist;
 	},
-	async isBuyerIdExist(id) {
+	async viewShopperReview(id) {
 		const isExist = await myContract.methods.viewShopperReview(id).call();
 		return isExist;
 	},
@@ -503,7 +503,7 @@ module.exports = {
 		const allData = await myContract.methods.allSellers().call();
 		return allData;
 	},
-	async getAllBuyerReview() {
+	async getAllShopperReview() {
 		const allData = await myContract.methods.allShoppers().call();
 		return allData;
 	},

@@ -1,10 +1,10 @@
 const validator = require("validator")
 
 module.exports = {
-    checkValidation(data){
+    checkValidation(res, req, next){
         let errors = [];
-        if (data) {
-            for (var [key, value] of Object.entries(data)) {
+        if (req.body) {
+            for (var [key, value] of Object.entries(req.body)) {
                 if(typeof(value) == "string"){
                     value = validator.trim(value);
                     value = validator.escape(value);
@@ -14,12 +14,13 @@ module.exports = {
                 }
             }
             if (errors.length) {
-                return { success: false, msg: 'Fields are missing', data: data, errors: errors.join(',') };
+                // return { success: false, msg: 'Fields are missing', data: data, errors: errors.join(',') };
+                return res.status(400).json({ success: false, msg: "Missing field", data: req.body, errors: errors.join(',') });
             } else {
-                return { success: true, msg: 'Fields are valid', data: data, errors: "" };
+                next();
             }
         } else {
-            return { success: false, msg: 'Fields are missing', data: data, errors: 'Fields are missing' };
+            return res.status(400).json({ success: false, msg: "Missing field", data: "", errors: "" });
         }
     },
     varCharVerification(value){
