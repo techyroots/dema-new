@@ -1,116 +1,50 @@
 const express = require("express");
-const async = require("async");
 const route = express.Router();
 const shopperReview = require("../controller/shopperReview/index");
 const productReview = require("../controller/productReview/index");
 const sellerReview = require("../controller/sellerReview/index");
-const Validator = require("../helpers/validators");
-const handleError = require("../helpers/handleError");
+const sellerReview = require("../helpers/validators");
+const { validationResult } = require("express-validator");
 
-const postQueue = async.queue(function(task, callback) {
-  task.handler(task.req, task.res, task.next);
-  callback();
+const sendResponse = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  req.controllerHandler(req, res);
+};
+
+route.get("/", (req, res) => {
+  res.status(203).json({ success: true, msg: "API is Working", data: "", error: "" });
 });
 
-route.get("/", (req, res)=>{
-    res.status(203).json({success:true, msg:"API is Working", data:"", error:""})
+route.get("/shopper-review", shopperReview.getShopperReviews);
+route.get("/product-review", productReview.getProductReviews);
+route.get("/seller-review", sellerReview.getSellerReviews);
+
+route.get("/all-shopper-review", shopperReview.getAllData);
+route.get("/all-product-review", productReview.getAllData);
+route.get("/all-seller-review", sellerReview.getAllData);
+
+route.post("/shopper-review", shopperReviewValidation, sendResponse, shopperReview.shopperReviews);
+route.post("/product-review", productReviewValidation, sendResponse, productReview.productReviews);
+route.post("/seller-review", sellerReviewValidation, sendResponse, sellerReview.sellerReviews);
+route.post("/product-response", productResponseValidation, sendResponse, productReview.productResponse);
+route.post("/seller-response", sellerResponseValidation, sendResponse, shopperReview.sellerResponse);
+route.post("/shopper-response", shopperResponseValidation, sendResponse, sellerReview.shopperResponse);
+route.post("/create-product", createProductValidation, sendResponse, productReview.createProduct);
+route.post("/create-shopper", createShopperValidation, sendResponse, shopperReview.createShopper);
+route.post("/create-seller", createSellerValidation, sendResponse, shopperReview.createSeller);
+
+route.use((err, req, res, next) => {
+  if (err) {
+    return res.status(500).json({ success: false, msg: err.message, data: {}, errors: '' });
+  }
+  next();
 });
-
-route.use(handleError);
-
-route.get("/shopper-review", shopperReview.getShopperReviews)
-route.get("/product-review", productReview.getProductReviews)
-route.get("/seller-review", sellerReview.getSellerReviews)
-
-route.get("/all-shopper-review", shopperReview.getAllData)
-route.get("/all-product-review", productReview.getAllData)
-route.get("/all-seller-review", sellerReview.getAllData)
-
-route.use(Validator.checkValidation);
-
-route.post("/seller-review", function(req, res, next) {
-    postQueue.push({
-      handler: shopperReview.sellerReview,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-  
-  route.post("/product-review", function(req, res, next) {
-    postQueue.push({
-      handler: productReview.productReviews,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-  
-  route.post("/shopper-review", function(req, res, next) {
-    postQueue.push({
-      handler: sellerReview.shopperReviews,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-  
-  route.post("/product-response", function(req, res, next) {
-    postQueue.push({
-      handler: productReview.productResponse,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-  
-  route.post("/seller-response", function(req, res, next) {
-    postQueue.push({
-      handler: shopperReview.sellerResponse,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-  
-  route.post("/shopper-response", function(req, res, next) {
-    postQueue.push({
-      handler: sellerReview.shopperResponse,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-
-  route.post("/create-product", function(req, res, next) {
-    postQueue.push({
-      handler: productReview.createProduct,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-
-  route.post("/create-shopper", function(req, res, next) {
-    postQueue.push({
-      handler: shopperReview.createShopper,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
-
-  route.post("/create-seller", function(req, res, next) {
-    postQueue.push({
-      handler: shopperReview.createSeller,
-      req: req,
-      res: res,
-      next: next
-    });
-  });
 
 route.use((req, res, next) => {
-    res.status(401).json({ success: false, msg: "Route not found", data: {}, errors: '' });
+  res.status(401).json({ success: false, msg: "Route not found", data: {}, errors: '' });
 });
 
 module.exports = route;

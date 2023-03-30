@@ -1,4 +1,5 @@
-const validator = require("validator")
+const validator = require("validator");
+const Joi = require('joi');
 
 module.exports = {
     checkValidation(res, req, next){
@@ -45,3 +46,62 @@ module.exports = {
 
 }
 
+exports.createSellerValidation = (req, res, next) => {
+    const schema = Joi.object({
+      id: Joi.number().required(),
+      name: Joi.string().required(),
+      address: Joi.string().required(),
+    });
+  
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        data: null,
+        error: error,
+      });
+    }
+  
+    next();
+  };
+
+  exports.createProductValidation = (req, res, next) => {
+    const schema = Joi.object({
+      id: Joi.number().required(),
+      name: Joi.string().required(),
+      description: Joi.string().required(),
+    });
+  
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        data: null,
+        error: error,
+      });
+    }
+  
+    next();
+  };
+
+  exports.createShopperValidation = (req, res, next) => {
+    const schema = Joi.object({
+      id: Joi.number().required(),
+      name: Joi.string().required(),
+      address: Joi.string().required(),
+    });
+  
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        data: null,
+        error: error,
+      });
+    }
+  
+    next();
+  };
