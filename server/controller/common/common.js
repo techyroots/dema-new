@@ -17,8 +17,8 @@ module.exports = {
         case 'Product':
           filename = 'product.json';
           oldReview = await Contract.getAllProductReview();
-          console.log(oldReview,"oldReview")
-          if(oldReviews !== "0" || oldReview !== 0){
+          console.log(typeof(oldReview),oldReview, oldReview == 0,"oldReview")
+          if(!oldReview.length || oldReview != '' && oldReview != 0){
             console.log("indie")
             oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
           }        
@@ -28,7 +28,7 @@ module.exports = {
         case 'Shopper':
           filename = 'shopper.json';
           oldReview = await Contract.getAllShopperReview()
-          if(oldReviews !== "0"){
+          if(!oldReview.length || oldReview != '' && oldReview != 0){
             oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
           }        
           allReviews = await shopperUtils.allShopper(oldReviews, review, type + id);
@@ -37,7 +37,7 @@ module.exports = {
         case 'Seller':
           filename = 'seller.json';
           oldReview = await Contract.getAllSellerReview()
-          if(oldReviews !== "0"){
+          if(!oldReview.length || oldReview != '' && oldReview != 0){
             oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
           }
           allReviews = sellerUtils.allSeller(oldReviews, review, type + id);
