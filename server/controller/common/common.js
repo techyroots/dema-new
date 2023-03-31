@@ -16,8 +16,10 @@ module.exports = {
       switch (type) {
         case 'Product':
           filename = 'product.json';
-          oldReview = await Contract.getAllProductReview()
-          if(oldReviews !== "0"){
+          oldReview = await Contract.getAllProductReview();
+          console.log(oldReview,"oldReview")
+          if(oldReviews !== "0" || oldReview !== 0){
+            console.log("indie")
             oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
           }        
           allReviews = productUtils.allProduct(oldReviews, review, type + id);
