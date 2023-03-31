@@ -1,3 +1,4 @@
+const averageRating = require("./../common/avgRating")
 module.exports = {
     create(productId, productName, productImage, productDescription, avgRating, sellerId, sellerName) {
         return {
@@ -22,7 +23,7 @@ module.exports = {
             responses: [],
         });
 
-        oldJson.avgRating = await this.getAverageRating(oldJson.reviews);
+        oldJson.avgRating = await averageRating.getAverageRating(oldJson.reviews);
         return oldJson;
     },
 
@@ -65,46 +66,31 @@ module.exports = {
         return oldData;
     },
 
-    async addResponse(dataJson, reviewerId, reviewerText, reviewerType, shopperId, name) {
-        console.log(dataJson, reviewerId, reviewerText, reviewerType, shopperId, name, "tfytguhj")
+    async addResponse(dataJson, responderId, responseText, responderType, shopperId, name) {
         const index = dataJson.reviews.findIndex((data) => data.reviewerId === shopperId);
         if (index >= 0) {
             dataJson.reviews[index].responses.push({
-                reviewerId,
-                reviewerName: name,
-                reviewerType,
-                responseText: reviewerText,
+                responderId,
+                responderName: name,
+                responderType,
+                responseText,
                 timestamp: new Date(),
             });
         }
         return dataJson;
     },
 
-    async addShopperSellerResponse(dataJson, productId, reviewerText, reviewerType, name, shopperId, reviewerId) {
+    async addShopperSellerResponse(dataJson, productId, name, shopperId, responderId, responseText, responderType) {
         const index = dataJson.productReviews.findIndex((data) => Number(data.productId) === Number(productId));
         const responseIndex = dataJson.productReviews[index].reviews.findIndex((data) => data.reviewerId === shopperId);
 
         dataJson.productReviews[index].reviews[responseIndex].responses.push({
-            reviewerId,
-            reviewerName: name,
-            reviewerType,
-            responseText: reviewerText,
+            responderId,
+            responderName: name,
+            responderType,
+            responseText,
             timestamp: new Date(),
         });
         return dataJson;
-    },
-
-    async getAverageRating(reviews) {
-        const len = reviews.length;
-        if (len === 0) return 0;
-        if (len === 1) return Number(reviews[0].rating);
-
-        const maxReviews = Math.min(len, 4);
-        let ratings = 0;
-
-        for (let i = 1; i <= maxReviews; i++) {
-            ratings += Number(reviews[len - i].rating);
-        }
-        return (ratings / maxReviews).toFixed(2);
     }
 };

@@ -27,11 +27,11 @@ module.exports = {
 
     productResponse(body){
         const schema = Joi.object({
-            id: Joi.number().required().label("Id").error(new Error('"Id" is required and should be valid')),
-            shopperId: Joi.number().required().label("shopperId").error(new Error('shopperId is required and should be valid')),
-            reviewText: Joi.string().required().label("Review").error(new Error('"Review" is required and should be valid')),
-            reviewerId: Joi.number().required().label("Reviewer").error(new Error('"Reviewer Id" is required and should be valid')),
-            reviewerType: Joi.number().required().label("rating").error(new Error('"Rating" is required and should be valid')),   
+            productId: Joi.number().required().label("ProductId").error(new Error('"ProductId" is required and should be valid')),
+            shopperId: Joi.number().required().label("ShopperId").error(new Error('ShopperId is required and should be valid')),
+            responseText: Joi.string().required().label("ResponseText").error(new Error('"Response" is required and should be valid')),
+            responderId: Joi.number().required().label("ResponderId").error(new Error('"Responder Id" is required and should be valid')),
+            responderType: Joi.number().required().label("ResponderType").error(new Error('"ResponderType" is required and should be valid')),   
         });
 
         return schema.validate(body);

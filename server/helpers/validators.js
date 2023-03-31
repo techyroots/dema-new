@@ -1,9 +1,9 @@
-const validator = require("validator");
-const Joi = require('joi');
+const validator = require("validator")
 
 module.exports = {
-    checkValidation(res, req, next){
+    checkValidation(req,res, next){
         let errors = [];
+        console.log(req.body)
         if (req.body) {
             for (var [key, value] of Object.entries(req.body)) {
                 if(typeof(value) == "string"){
@@ -46,62 +46,3 @@ module.exports = {
 
 }
 
-exports.createSellerValidation = (req, res, next) => {
-    const schema = Joi.object({
-      id: Joi.number().required(),
-      name: Joi.string().required(),
-      address: Joi.string().required(),
-    });
-  
-    const { error } = schema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        data: null,
-        error: error,
-      });
-    }
-  
-    next();
-  };
-
-  exports.createProductValidation = (req, res, next) => {
-    const schema = Joi.object({
-      id: Joi.number().required(),
-      name: Joi.string().required(),
-      description: Joi.string().required(),
-    });
-  
-    const { error } = schema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        data: null,
-        error: error,
-      });
-    }
-  
-    next();
-  };
-
-  exports.createShopperValidation = (req, res, next) => {
-    const schema = Joi.object({
-      id: Joi.number().required(),
-      name: Joi.string().required(),
-      address: Joi.string().required(),
-    });
-  
-    const { error } = schema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        data: null,
-        error: error,
-      });
-    }
-  
-    next();
-  };

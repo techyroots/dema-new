@@ -1,14 +1,44 @@
 const sellerService = require("./service");
 const Contract = require("../contract/index")
 const IpfsService = require("../ipfs/service");
-const Validator = require("../../helpers/validators");
 const sellerValidate = require("./validation")
+const shopperValidate = require("./../shopperReview/validation")
 
 module.exports = {
-    
-    async shopperReviews(req, res) {
+    async createSeller(req, res) {
         try {
-            const { error } = sellerValidate.shopper(req.body);
+            const { error } = shopperValidate.create(req.body);
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.message,
+                    data: null,
+                    error: error.message
+                });
+            }
+
+            const { id, name, address } = req.body;
+            const sellerHash = await Contract.viewSellerReview(Number(id));
+            if (!sellerHash.length) {
+                console.log(sellerHash,"sellerHash")
+                const sellerCreated = await sellerService.create(id, name, address);
+                return res.status(200).json(sellerCreated);
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Seller ID already exists',
+                    data: {},
+                    error: null
+                });
+            }
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message, data: null, error });
+        }
+    },
+
+    async shopperReview(req, res) {
+        try {
+            const { error } = shopperValidate.review(req.body);
             if (error) {
                 return res.status(400).json({
                     success: false,
@@ -17,8 +47,8 @@ module.exports = {
                     error: error
                 });
             }
-    
-            const { id, reviewText, revieweeId, rating, productId } = req.body;
+
+            const { id, revieweeId, reviewText, rating, productId } = req.body;
             const sellerHash = await Contract.viewSellerReview(Number(id));
             if (!sellerHash || !sellerHash.length) {
                 return res.status(400).json({
@@ -28,7 +58,7 @@ module.exports = {
                     error: null
                 });
             }
-    
+
             const [sellerJSON, shopperJSON] = await Promise.all([
                 IpfsService.gateway(sellerHash),
                 Contract.viewShopperReview(Number(revieweeId)).then(IpfsService.gateway)
@@ -39,35 +69,32 @@ module.exports = {
             return res.status(500).json({ success: false, message: error.message, data: null, error });
         }
     }
-    
+
     ,
     async shopperResponse(req, res) {
-        try{
-        const { error } = sellerValidate.shopperResponse(req.body);
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: error.message,
-                data: null,
-                error: error
-            });
-        }
-    
-        const { id, shopperId, reviewerType, reviewText, reviewerId, productId } = req.body;
-        const sellerHash = await Contract.viewSellerReview(Number(id));
-        if (!sellerHash || !sellerHash.length) {
-            return res.status(400).json({
-                success: false,
-                message: 'Seller ID not exist',
-                data: null,
-                error: null
-            });
-        }
-    
-        
-        const sellerJSON = await IpfsService.gateway(sellerHash);
-        const responseAdded = await sellerService.response(JSON.parse(sellerJSON), id, shopperId, reviewerType, reviewText, reviewerId, productId);
-        return res.status(200).json(responseAdded);
+        try {
+            const { error } = sellerValidate.shopperResponse(req.body);
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.message,
+                    data: null,
+                    error: error
+                });
+            }
+            const { sellerId, shopperId, responderId, responseText, responderType, productId } = req.body;
+            const sellerHash = await Contract.viewSellerReview(Number(sellerId));
+            if (!sellerHash || !sellerHash.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Seller ID not exist',
+                    data: null,
+                    error: null
+                });
+            }
+            const sellerJSON = await IpfsService.gateway(sellerHash);
+            const responseAdded = await sellerService.addResponse(JSON.parse(sellerJSON), sellerId, shopperId, responderId, responseText, responderType, productId);
+            return res.status(200).json(responseAdded);
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message, data: null, error });
         }
@@ -84,13 +111,13 @@ module.exports = {
                     error: null
                 });
             }
-                const response = await sellerService.getData(sellerId);
-                if (response.success) {
-                    return res.status(200).json(response)
-                } else {
-                    return res.status(400).json(response)
-                }
-            
+            const response = await sellerService.getData(sellerId);
+            if (response.success) {
+                return res.status(200).json(response)
+            } else {
+                return res.status(400).json(response)
+            }
+
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message, data: null, error });
         }

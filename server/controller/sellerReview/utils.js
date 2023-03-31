@@ -1,3 +1,4 @@
+const averageRating = require("./../common/avgRating")
 module.exports = {
     create(id, name, address, avgRating) {
         return {
@@ -10,13 +11,14 @@ module.exports = {
             shopperReviews: []
         }
     },
-    async addReview(oldJson, reviewerId, review, rating, name, productId) {
-        const index = oldJson.shopperReviews.findIndex(data => data.reviewerId === reviewerId);
+    async addReview(oldJson, revieweeId, reviewText, rating, name, productId) {
+        console.log(oldJson,"gcfhjbn")
+        const index = oldJson.shopperReviews.findIndex(data => data.reviewerId ===  revieweeId);
         const newReview = {
             productId,
-            reviewerId,
-            reviewerName: name,
-            review,
+            revieweeId,
+            revieweeName: name,
+            reviewText,
             rating,
             timestamp: new Date(),
             responses: [],
@@ -32,15 +34,15 @@ module.exports = {
     ,
     async addShopperReview(oldJson, id, reviewText, rating, name, productId) {      
         oldJson.sellerToShopperReviews.push({
-            productId: productId,
+            productId,
             reviewerId: id,
             reviewerName: name,
-            reviewText: reviewText,
-            rating: rating,
+            reviewText,
+            rating,
             timestamp: new Date(),
             responses: [],
         })
-        oldJson.avgRating = await this.getAverageRating(oldJson.sellerToShopperReviews)
+        oldJson.avgRating = await averageRating.getAverageRating(oldJson.sellerToShopperReviews)
         return oldJson
     },
 
@@ -50,36 +52,41 @@ module.exports = {
         const totalReviews = data.sellerReviews.length;
         const totalProducts = data.productReviews.length;
         const obj = { id: data.id, totalProducts: totalProducts, rating: avgRating, totalReviews: totalReviews, IPFS: hash }
-        const index = oldData.findIndex(item => item.id === data.id);
-        if (index >= 0) {
-            oldData[index] = obj
-        } else {
-            oldData.push(obj)
+        if (Array.isArray(oldData)) {
+            const index = oldData.findIndex(item => item.id === data.id);
+            if (index >= 0) {
+                oldData[index] = obj
+            } else {
+                oldData.push(obj)
+            }
+        }else{
+            oldData = [obj]
         }
+       
         return oldData;
     },
-    addResponse(dataJson, shopperId, reviewText, reviewerType, reviewerId, name) {
-        const Index = dataJson.shopperReviews.findIndex((data) => { return data.reviewerId == shopperId });
+    addResponse(dataJson, shopperId, responderId, responseText, responderType, name) {
+        const Index = dataJson.shopperReviews.findIndex((data) => { return data.revieweeId == shopperId });
         if (Index >= 0) {
             dataJson.shopperReviews[Index].responses.push({
-                reviewerId: reviewerId,
-                reviewerName: name,
-                reviewerType: reviewerType,
-                responseText: reviewText,
-                timestamp: new Date()
+                responderId,
+                responderName: name,
+                responderType,
+                responseText,
+                timestamp: new Date(),
             })
         }
         return dataJson;
     },
-    addShopperResponse(dataJson, id, reviewText, reviewerType, reviewerId, name) {
+    addShopperResponse(dataJson, id, responderId, responseText, responderType, name) {
         const Index = dataJson.sellerToShopperReviews.findIndex((data) => { return data.reviewerId == id });
         if (Index >= 0) {
             dataJson.sellerToShopperReviews[Index].responses.push({
-                reviewerId: reviewerId,
-                reviewerName: name,
-                reviewerType: reviewerType,
-                responseText: reviewText,
-                timestamp: new Date()
+                responderId,
+                responderName: name,
+                responderType,
+                responseText,
+                timestamp: new Date(),
             })
         }
         return dataJson;

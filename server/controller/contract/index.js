@@ -1,7 +1,7 @@
 const Web3 = require("web3");
 const dotenv = require("dotenv");
 dotenv.config();
-const address = "0xF66fea47527e2E7C3862830a082D51593b5f93b2";
+const address = "0x21bb135AC698Cc5a1785b6ec03C297991F218588";
 const ABI = [
 	{
 		"inputs": [
@@ -324,16 +324,16 @@ const myContract = new web3.eth.Contract(ABI, address);
 
 module.exports = {
 	async viewProductReview(id) {
-		const isExist = await myContract.methods.viewProductReview(id).call();
-		return isExist;
+		const productHash = await myContract.methods.viewProductReview(id).call();
+		return productHash;
 	},
 	async viewSellerReview(id) {
-		const isExist = await myContract.methods.viewSellerReview(id).call();
-		return isExist;
+		const sellerHash = await myContract.methods.viewSellerReview(id).call();
+		return sellerHash;
 	},
 	async viewShopperReview(id) {
-		const isExist = await myContract.methods.viewShopperReview(id).call();
-		return isExist;
+		const shopperHash = await myContract.methods.viewShopperReview(id).call();
+		return shopperHash;
 	},
 
 	async createProduct(productId, productHash, allProductHash) {

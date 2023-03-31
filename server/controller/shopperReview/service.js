@@ -7,92 +7,93 @@ const common = require("../common/common")
 module.exports = {
     async create(id, name, address) {
         try {
-            const isReviewCreated = shopperUtils.create(id, name, address, 0);
-            console.log(isReviewCreated, "fcghjb")
-            const result = await common.uploadShopper(isReviewCreated, id)
-            const saveHash = await Contract.createShopper(id, result[0], result[1]);
+            const shopper = shopperUtils.create(id, name, address, 0);          
+            const [shopperHash, allShopperHash] = await common.uploadReview( "Shopper", shopper, id)
+            const saveHash = await Contract.createShopper(id, shopperHash, allShopperHash);
             if (saveHash) {
-                return { success: true, message: "Created SuccessFully", data: "", error: "" };
+                return { success: true, message: "Shopper Created SuccessFully", data: "", error: "" };
             } else {
-                return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR Shopper 01" };
+                return { success: false, message: "Unable to save shopper hash to the blockchain", data: "", error: "ERROR Shopper" };
             }
-
         } catch (error) {
-            return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR Shopper 03" };
+            return { success: false, message: error.message, data: null, error: error };
         }
     },
-    async addReview(shopperId, shopperOldJson, revieweeId, reviewText, rating, sellerOldJson, productId) {
+    async addReview(shopperId, shopperOldJSON, revieweeId, reviewText, rating, sellerOldJSON, productId) {
         try {
-            const [isReviewAdded, isSellerReviewAdded] = await Promise.all([shopperUtils.addReview(shopperOldJson, revieweeId, reviewText, rating, sellerOldJson.name, productId),
-            shopperUtils.addSellerReview(sellerOldJson, shopperId, reviewText, rating, shopperOldJson.name, productId)])
+            const [reviewAdded, sellerReviewAdded] = await Promise.all([shopperUtils.addReview(shopperOldJSON, revieweeId, reviewText, rating, sellerOldJSON.name, productId),
+            shopperUtils.addSellerReview(sellerOldJSON, shopperId, reviewText, rating, shopperOldJSON.name, productId)])
 
-            console.log(isReviewAdded, isSellerReviewAdded, "dtfyguhijo")
+            console.log(reviewAdded, sellerReviewAdded, "dtfyguhijo")
             const [shopperInfo, sellerInfo] = await Promise.all([
-                common.uploadShopper(isReviewAdded, shopperId),
-                common.uploadSeller(isSellerReviewAdded, revieweeId)
+                common.uploadReview("Shopper", reviewAdded, shopperId),
+                common.uploadReview("Seller", sellerReviewAdded, revieweeId)
             ]);
 
             const saveHash = await Contract.addSellerShopperReview(revieweeId, shopperId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
             if (saveHash) {
-                return { success: true, message: "Posted SuccessFully", data: "", error: "" };
+                return { success: true, message: "Review Posted SuccessFully", data: saveHash, error: null};
             } else {
-                return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR Product 10" };
+                return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
         } catch (error) {
-            console.log(error);
-            return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR shopper 13" + error.message };
+            return { success: false, message: error.message, data: null, error: error };
         }
     },
-    async getData(id) {
-        const isIdExist = await Contract.viewShopperReview(Number(id))
-        if (isIdExist !== "0" && isIdExist !== 0) {
-            const data = JSON.parse(await IpfsService.gateway(isIdExist));
-            const URL = await IpfsService.getImageURL(isIdExist);
-            return { success: true, message: "Data found", data: data, imageURL: URL, error: "" }
-        } else {
-            return { success: false, message: "Id not found", data: "", error: "" }
-        }
-    },
-    async getAllData() {
-        const hash = await Contract.getAllShopperReview();
-        if (hash !== 0 && hash !== "0") {
-            const data = JSON.parse(await IpfsService.gateway(hash));
-            const URL = await IpfsService.getImageURL(hash);
-            return { success: true, message: "Data found", data: data, imageURL: URL, error: "" }
-        } else {
-            return { success: false, message: "Data not found", data: "", error: "" }
-        }
-    },
-    async response(dataJson, id, sellerId, reviewerType, reviewText, revieweeId, productId) {
+    async addResponse(dataJSON, id, sellerId, responderId, responseText, responderType, productId) {
         try {
-            const isIdExist = await (reviewerType == 1 ? Contract.viewShopperReview(Number(revieweeId)) : Contract.viewSellerReview(Number(revieweeId)));
+            const isIdExist = await (responderType == 1 ? Contract.viewShopperReview(Number(responderId)) : Contract.viewSellerReview(Number(responderId)));
             const getOldJSON = await IpfsService.gateway(isIdExist);
-            const OldJson = JSON.parse(getOldJSON);
+            const OldJSON = JSON.parse(getOldJSON);
 
-            const [responsedataJson, sellerDataJson] = await Promise.all([
-                shopperUtils.addResponseToSellerReview(dataJson, sellerId, reviewText, reviewerType, revieweeId, OldJson.name),
-                Contract.viewSellerReview(Number(sellerId)).then(sellerData => IpfsService.gateway(sellerData).then(getSellerJSON => shopperUtils.addResponseToSellerReview(JSON.parse(getSellerJSON), id, reviewText, reviewerType, revieweeId, OldJson.name))),
+            const [responsedataJSON, sellerDataJSON] = await Promise.all([
+                shopperUtils.addShopperResponse(dataJSON, sellerId, responderId, responseText, responderType, OldJSON.name),
+                Contract.viewSellerReview(Number(sellerId)).then(sellerData => IpfsService.gateway(sellerData).then(getSellerJSON => shopperUtils.addResponse(JSON.parse(getSellerJSON), id,  responderId, responseText, responderType, OldJSON.name))),
             ]);
             const [shopperInfo, sellerInfo] = await Promise.all([
-                common.uploadShopper(responsedataJson, id),
-                common.uploadSeller(sellerDataJson, sellerId)
+                common.uploadReview("Shopper", responsedataJSON, id),
+                common.uploadReview("Seller", sellerDataJSON, sellerId)
             ]);
 
             const saveHash = await Contract.addReviewReply(productId, sellerId, id, "ProductInfomation1" + productId, sellerInfo[0], shopperInfo[0], 'AllProductInfomation1', sellerInfo[1], shopperInfo[1]);
             if (saveHash) {
-                return { success: true, message: "Posted SuccessFully", data: "", error: "" };
+                return { success: true, message: "Response Posted SuccessFully", data: saveHash, error: null };
             } else {
-                return { success: false, message: "Can't process your request right now please try again later", data: "", error: "ERROR Product 10" };
+                return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
         } catch (error) {
-            return {
-                success: false,
-                message: "Can't process your request right now please try again later",
-                data: "",
-                error: "ERROR Product 01",
-            };
+            return { success: false, message: error.message, data: null, error: error };
         }
-    }
+    },
+    async getData(id) {
+        try{
+            const shopperHash = await Contract.viewShopperReview(Number(id))
+            if (shopperHash || shopperHash.length) {
+                const shopperJSON = JSON.parse(await IpfsService.gateway(shopperHash));
+                const URL = await IpfsService.getImageURL(shopperHash);
+                return { success: true, message: "Shopper Details Found", data: shopperJSON, URL: URL, error: null }
+            } else {
+                return { success: false, message: "Shopper Id not exist", data: null, error: null }
+            }
+        }catch(error){
+            return { success: false, message: error.message, data: null, error: error };
+        }
+    },
+    async getAllData() {
+        try{
+            const allShopperHash = await Contract.getAllShopperReview();
+            if (allShopperHash || allShopperHash.length) {
+                const allShopperJSON = JSON.parse(await IpfsService.gateway(allShopperHash));
+                const URL = await IpfsService.getImageURL(allShopperHash);
+                return { success: true, message: "All shopper details found", data: allShopperJSON, URL: URL, error: null }
+            } else {
+                return { success: false, message: "All shopper details not found", data: null, error: null }
+            }
+        }catch(error){
+            return { success: false, message: error.message, data: null, error: error };
+        }
+    },
+  
 
 
 

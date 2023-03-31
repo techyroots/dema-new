@@ -1,4 +1,4 @@
-
+const averageRating = require("./../common/avgRating")
 module.exports = {
     create(id, name, address, avgRating) {
         console.log(avgRating)
@@ -13,14 +13,14 @@ module.exports = {
         }
     },
 
-    addReview(oldJson, reviewerId, review, rating, name, productId) {
-        const index = oldJson.sellerReviews.findIndex(sellerReview => sellerReview.reviewerId === reviewerId);
+    addReview(oldJson, revieweeId, reviewText, rating, name, productId) {
+        const index = oldJson.sellerReviews.findIndex(sellerReview => sellerReview.reviewerId === revieweeId);
         const obj = {
-            productId: productId,
-            reviewerId: reviewerId,
-            reviewerName: name,
-            review: review,
-            rating: rating,
+            productId,
+            revieweeId,
+            revieweeName: name,
+            reviewText,
+            rating,
             timestamp: new Date(),
             responses: []
         }
@@ -34,50 +34,66 @@ module.exports = {
 
     async addSellerReview(oldJson, id, reviewText, rating, name, productId) {      
         oldJson.sellerReviews.push({
-            productId: productId,
+            productId,
             reviewerId: id,
             reviewerName: name,
-            reviewText: reviewText,
-            rating: rating,
+            reviewText,
+            rating,
             timestamp: new Date(),
             responses: []
         });
-        oldJson.avgRating = await this.getAverageRating(oldJson.sellerReviews);
+        oldJson.avgRating = await averageRating.getAverageRating(oldJson.sellerReviews);
         return oldJson;
     },
 
-    async allShopper(oldData, data, hash) {
-       
-        let avgRating = await this.getAverageRating(data.sellerToShopperReviews)
-       
+    async allShopper(oldData, data, hash) { 
+        console.log(oldData,"oldData, data, hash")  
+        console.log( data, "data")
+        console.log( hash,"hash")   
+        const avgRating = await averageRating.getAverageRating(data.sellerToShopperReviews)    
         const totalReviews = data.sellerToShopperReviews.length;
         const totalProducts = data.productReviews.length;
         const obj = { id: data.id, totalProducts, totalReviews, rating: avgRating, IPFS: hash };
-        console.log(oldData,"olddta")
-        if(oldData.length){
+        if (Array.isArray(oldData)) {
             const index = oldData.findIndex((item) => item.id === data.id);
             if (index >= 0) {
                 oldData[index] = obj;
             } else {
                 oldData.push(obj);
             }
-        }else{
-            oldData = [(obj)];
+        }
+        else{
+            oldData = [obj];
         }
         return oldData;
     },
 
-    addResponseToSellerReview(data, sellerId, reviewText, reviewerType, reviewerId, name) {
-        const reviewIndex = data.sellerReviews.findIndex(review => review.reviewerId === sellerId);
-        if (reviewIndex >= 0) {
+    addResponse(data, sellerId, responderId, responseText, responderType, name) {
+        const responseIndex = data.sellerReviews.findIndex(review => review.reviewerId === sellerId);
+        if (responseIndex >= 0) {
             const response = {
-                reviewerId,
-                reviewerName: name,
-                reviewerType,
-                responseText: reviewText,
+                responderId,
+                responderName: name,
+                responderType,
+                responseText,
                 timestamp: new Date()
             };
-            data.sellerReviews[reviewIndex].responses.push(response);
+            data.sellerReviews[responseIndex].responses.push(response);
+        }
+        console.log(data,"fyghjkl")
+        return data;
+    },
+    addShopperResponse(data, sellerId, responderId, responseText, responderType, name) {
+        const responseIndex = data.sellerReviews.findIndex(review => review.revieweeId === sellerId);
+        if (responseIndex >= 0) {
+            const response = {
+                responderId,
+                responderName: name,
+                responderType,
+                responseText,
+                timestamp: new Date()
+            };
+            data.sellerReviews[responseIndex].responses.push(response);
         }
         console.log(data,"fyghjkl")
         return data;
