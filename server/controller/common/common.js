@@ -22,6 +22,7 @@ module.exports = {
             console.log("indie")
             oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
           }        
+          console.log(oldReviews)
           allReviews = productUtils.allProduct(oldReviews, review, type + id);
           break;
     
@@ -46,11 +47,11 @@ module.exports = {
         default:
           throw new Error('Invalid review type');
       }
-    
+     console.log(review, allReviews)
       fs.writeFileSync(path.join(__dirname, `../../../${filename}`), JSON.stringify(review));
-      const isUploaded = await IpfsService.pinJSONToIPFS(type + id);
-      fs.writeFileSync(path.join(__dirname, `../../../${filename}`), JSON.stringify(allReviews));
-      const isUploadedAll = await IpfsService.pinJSONToIPFS("All" + type);
+      const isUploaded = await IpfsService.pinJSONToIPFS(type + id, filename);
+      fs.writeFileSync(path.join(__dirname, `../../../All${filename}`), JSON.stringify(allReviews));
+      const isUploadedAll = await IpfsService.pinJSONToIPFS(`All${type}`, `All${filename}`);
     
       return [isUploaded.key, isUploadedAll.key];
     }

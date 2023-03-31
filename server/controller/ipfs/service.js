@@ -1,15 +1,17 @@
-var axios = require('axios');
+const dotenv = require("dotenv");
+dotenv.config();
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const accessKeyId = 'jw4zjxvbpbbwqbnxp5dqxyrdkyeq';
-const secretAccessKey = 'jzw5fdh3y2hljbmxixden3krvxgilyvc5uaz3md55bvytyhcld3de';
-const endpoint = 'https://gateway.storjshare.io'; // e.g. "https://gateway.storj.io"
-const bucketName = 'demo-bucket';
+const accessKeyId = process.env.accessKeyId;
+const secretAccessKey = process.env.secretAccessKey;
+const endpoint = process.env.endpoint; // e.g. "https://gateway.storj.io"
+const bucketName = process.env.bucketName;
 
 
 
 module.exports = {
-    pinJSONToIPFS (objectKey) {
+    pinJSONToIPFS (objectKey, filename) {
+        console.log(objectKey)
         return new Promise((resolve, reject) => {
             var s3 = new AWS.S3({
                 accessKeyId,
@@ -20,7 +22,7 @@ module.exports = {
             const uploadParams = {
                 Bucket: bucketName,
                 Key: objectKey,
-                Body: fs.readFileSync('./data.json'),
+                Body: fs.readFileSync(`./${filename}`),
                 ContentType: 'application/json',
             };
  

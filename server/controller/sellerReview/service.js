@@ -58,7 +58,7 @@ module.exports = {
                 common.uploadReview("Seller", sellerDataJSON, id),
                 common.uploadReview("Shopper", shopperDataJSON, shopperId)
             ]);
-            const saveHash = await Contract.addReviewReply(productId, id, shopperId, "ProductInfomation1" + productId, sellerInfo[0], shopperInfo[0], 'AllProductInfomation1', sellerInfo[1], shopperInfo[1]);
+            const saveHash = await Contract.addReviewReply(productId, id, shopperId, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
             if (saveHash) {
                 return { success: true, message: "Response Posted SuccessFully", data: saveHash, error: null };
             } else {

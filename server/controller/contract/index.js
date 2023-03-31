@@ -1,7 +1,7 @@
 const Web3 = require("web3");
 const dotenv = require("dotenv");
 dotenv.config();
-const address = "0x21bb135AC698Cc5a1785b6ec03C297991F218588";
+const address = "0x0c43971dF4b8cf60A627119De3aa82d153d7f86a";
 const ABI = [
 	{
 		"inputs": [
@@ -319,7 +319,7 @@ const ABI = [
 ];
 const RPC = "https://matic-mumbai.chainstacklabs.com";
 // const web3 = new Web3(new Web3.providers.HttpProvider(RPC));
-const web3 = new Web3(Web3.givenProvider || RPC);
+const web3 = new Web3(Web3.givenProvider || process.env.RPC);
 const myContract = new web3.eth.Contract(ABI, address);
 
 module.exports = {

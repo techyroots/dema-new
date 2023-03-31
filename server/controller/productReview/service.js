@@ -97,8 +97,8 @@ module.exports = {
     },
     async getAllData() {
         try{
-            const allProductHash = await Contract.getAllProductReview();
-            if (allProductHash || allProductHash.length) {
+            const allProductHash = await Contract.getAllProductReview()
+            if (!allProductHash.length || allProductHash != 0 && allProductHash !== "0") {
                 const allProductJSON = JSON.parse(await IpfsService.gateway(allProductHash));
                 return { success: true, message: "All product details found", data: allProductJSON, error: null }
             } else {
