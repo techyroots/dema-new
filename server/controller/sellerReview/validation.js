@@ -1,6 +1,11 @@
 const Joi = require('joi');
 
 module.exports = {
+    /**
+     * Validates the request body for creating a shopper response object.
+     * @param {Object} body - The request body to be validated.
+     * @returns {Object} - An object containing the validation results.
+     */
     shopperResponse(body){
         const schema = Joi.object({
             sellerId: Joi.number().required().label("Id").error(new Error('"SellerId" is required and should be valid')),    

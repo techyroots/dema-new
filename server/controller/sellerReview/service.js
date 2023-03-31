@@ -1,3 +1,7 @@
+/**
+ * Module to handle seller related operations
+ * @module seller
+ */
 const sellerUtils = require("./utils")
 const IpfsService = require("../ipfs/service")
 const Contract = require("../contract/index")
@@ -5,11 +9,22 @@ const common = require("./../common/common")
 
 
 module.exports = {
+    /**
+    * Create a new seller
+    * @async
+    * @param {number} id - The seller's ID
+    * @param {string} name - The seller's name
+    * @param {string} address - The seller's address
+    * @returns {Object} Object with success, message, data and error properties
+    */
     async create(id, name, address) {
         try {
+            // create a new seller object using the sellerUtils module
             const seller = sellerUtils.create(id, name, address, 0);
+            // upload the new seller object and get the seller and all seller hashes
             const [sellerHash, allSellerHash] = await common.uploadReview("Seller", seller, id);
             console.log(sellerHash, allSellerHash)
+            // create the seller on the blockchain and get the saveHash
             const saveHash = await Contract.createSeller(id, sellerHash, allSellerHash);
             if (saveHash) {
                 return { success: true, message: "Seller Created SuccessFully", data: saveHash, error: null };
@@ -20,18 +35,30 @@ module.exports = {
             return { success: false, message: error.message, data: null, error: error };
         }
     },
+
+    /**
+     * addReview is a function that adds a review to the seller.
+     * @param {number} sellerId - The unique identifier of the seller.
+     * @param {object} sellerOldJSON - JSON object containing the old data of the seller.
+     * @param {number} revieweeId - The unique identifier of the shopper who is leaving the review.
+     * @param {string} reviewText - The text of the review that the shopper is leaving.
+     * @param {number} rating - The rating that the shopper is giving to the seller.
+     * @param {object} shopperOldJSON - JSON object containing the old data of the shopper.
+     * @param {number} productId - The unique identifier of the product that the shopper is reviewing.
+     * @returns {object} - Returns an object with a success status, message, data and error.
+     */
     async addReview(sellerId, sellerOldJSON, revieweeId, reviewText, rating, shopperOldJSON, productId) {
         try {
+            // Adding review to  seller JSON and shopper JSON using Promise.all()
             const [reviewAdded, shopperReviewAdded] = await Promise.all([sellerUtils.addReview(sellerOldJSON, revieweeId, reviewText, rating, shopperOldJSON.name, productId)
                 , sellerUtils.addShopperReview(shopperOldJSON, sellerId, reviewText, rating, sellerOldJSON.name, productId)]);
-            console.log(reviewAdded, shopperReviewAdded,"reviewAdded, shopperReviewAdded")
+            // Uploading updated JSON to IPFS and storing the hash in variables
             const [sellerInfo, shopperInfo] = await Promise.all([
                 common.uploadReview("Seller", reviewAdded, sellerId),
                 common.uploadReview("Shopper", shopperReviewAdded, revieweeId)
             ]);
-
+            // Save hash on blockchain
             const saveHash = await Contract.addSellerShopperReview(sellerId, revieweeId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
-
             if (saveHash) {
                 return { success: true, message: "Review Posted SuccessFully", data: saveHash, error: null};
             } else {
@@ -42,6 +69,18 @@ module.exports = {
         }
     }
     ,
+
+    /**
+     * Add response to the seller or shopper review
+     * @param {Object} dataJSON - The seller JSON data to which response is to be added
+     * @param {Number} id - The seller id
+     * @param {Number} shopperId - The shopper id who left the review
+     * @param {Number} responderId - The id of the responder (seller or shopper)
+     * @param {String} responseText - The response text to be added
+     * @param {Number} responderType - The type of responder (seller or shopper)
+     * @param {Number} productId - The id of the product for which review was left
+     * @returns {Object} - The response object with success flag, message and error if any
+     */
     async addResponse(dataJSON, id, shopperId, responderId, responseText, responderType, productId) {
         try {
 
@@ -68,6 +107,11 @@ module.exports = {
             return { success: false, message: error.message, data: null, error: error };
         }
     },
+    /**
+    Asynchronous function to get the data of a specific seller using its ID.
+    * @param {Number} id - The ID of the seller to get the data for.
+    * @returns {Object} - An object containing the success status, message, data, URL, and error (if any).
+    */
     async getData(id) {
         try {
             const sellerHash = await Contract.viewSellerReview(Number(id))
@@ -83,6 +127,11 @@ module.exports = {
         }
 
     },
+
+    /**
+    Asynchronous function to get the data of all seller.
+    * @returns {Object} - An object containing the success status, message, data, and error (if any).
+    */
     async getAllData() {
         try{
             const allSellerHash = await Contract.getAllSellerReview();

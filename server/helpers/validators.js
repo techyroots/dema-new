@@ -1,6 +1,16 @@
+/**
+ * Module for input validation
+ * @module helpers/validators
+ */
 const validator = require("validator")
 
 module.exports = {
+    /**
+   * Middleware function to check input validation for request body
+   * @param {object} req - The request object
+   * @param {object} res - The response object
+   * @param {function} next - The next middleware function
+   */
     checkValidation(req,res, next){
         let errors = [];
         console.log(req.body)
@@ -15,7 +25,6 @@ module.exports = {
                 }
             }
             if (errors.length) {
-                // return { success: false, msg: 'Fields are missing', data: data, errors: errors.join(',') };
                 return res.status(400).json({ success: false, msg: "Missing field", data: req.body, errors: errors.join(',') });
             } else {
                 next();
@@ -23,26 +32,6 @@ module.exports = {
         } else {
             return res.status(400).json({ success: false, msg: "Missing field", data: "", errors: "" });
         }
-    },
-    varCharVerification(value){
-        if(typeof(value) == "string"){
-            let field = validator.trim(value);
-            field = validator.escape(value);
-            if (field != null && field != undefined && field != '') {
-                const valRegex = /^[a-zA-Z0-9 ]*$/;
-                const isValidString = valRegex.test(field);
-                if(isValidString){
-                    return true;
-                }else{
-                    return false
-                }
-            }else{
-                return false;
-            }
-        }else {
-            return false
-        }
     }
-
 }
 

@@ -1,6 +1,11 @@
 const Joi = require('joi');
 
 module.exports = {
+    /**
+     * Validates the request body for creating a shopper/seller
+     * @param {Object} body - The request body to be validated
+     * @returns {Object} Returns a Joi validation object
+     */
     create(body){
         const schema = Joi.object({
             id: Joi.number().required().label("Id").error(new Error('"Id" is required and should be valid')),
@@ -9,6 +14,11 @@ module.exports = {
         });
         return schema.validate(body);
     },
+    /**
+    * Validates the request body for adding a seller/shopper review
+    * @param {Object} body - The request body to be validated
+    * @returns {Object} Returns a Joi validation object
+    */
     review(body){
         const schema = Joi.object({
             id: Joi.number().required().label("Id").error(new Error('"Id" is required and should be valid')),
@@ -19,6 +29,12 @@ module.exports = {
         })
         return schema.validate(body);
     },
+
+    /**
+     * Validates the request body for adding a seller review response
+     * @param {Object} body - The request body to be validated
+     * @returns {Object} Returns a Joi validation object
+     */
     sellerResponse(body){
         const schema = Joi.object({
             shopperId: Joi.number().required().label("ShopperId").error(new Error('"ShopperId" is required and should be valid')),    
