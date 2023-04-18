@@ -1,0 +1,63 @@
+@media screen and (Max-width: 990px) {
+    .Dash-section {
+        padding-top: 0px;
+    }
+    .header {
+        padding: 5px 30px;
+    }
+    #toggle {
+        display: block;
+      }
+}
+
+
+@media screen and (Max-width: 1167px){
+
+    .col-section {
+        min-height: 175px;
+    }
+}
+
+@media screen and (Max-width: 767px) {
+    .Table-heading{
+        font-size: 35px;
+    }
+    #tab_Reviews .Dash-section h3 {
+        font-size: 35px;
+    }
+    .container {
+        max-width: 715px;
+    }
+
+    .col-section{
+        margin-top: 30px ;
+    }
+}
+
+
+@media screen and (Max-width: 600px){
+    .Table-heading {
+        font-size: 30px;
+    }
+    #Reviews a {
+        padding: 4px 15px;
+    }
+    #tab_Reviews .Dash-section h3 {
+        font-size: 30px;
+    }
+}
+
+
+
+@media screen and (Max-width: 450px){
+    .Table-heading {
+        font-size: 25px;
+    }
+    .back-bttn a {
+        padding: 7px 15px !important;
+    }
+    #Reviews a {
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+}
