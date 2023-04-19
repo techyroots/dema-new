@@ -78,6 +78,7 @@ module.exports = {
       path.join(__dirname, `../../../${filename}`),
       JSON.stringify(review)
     );
+    // type + id is the hash where type means product, seller or shopper and id means id of product, shopper and seller
     const isUploaded = await IpfsService.pinJSONToIPFS(type + id, filename);
 
     // Write the updated reviews to a file and upload it to IPFS
