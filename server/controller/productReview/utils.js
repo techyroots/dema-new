@@ -25,6 +25,7 @@ module.exports = {
             sellerId,
             sellerName,
             avgRating,
+            txnHash : 0,
             reviews: [],
         };
     },
@@ -158,5 +159,10 @@ module.exports = {
             timestamp: new Date(),
         });
         return dataJson;
+    },
+    async addTxn(productJSON, hash){
+        console.log(productJSON.txnHash, hash, "product")
+        productJSON.txnHash = hash;
+        return productJSON;
     }
 };

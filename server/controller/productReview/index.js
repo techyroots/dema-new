@@ -136,7 +136,7 @@ module.exports = {
     try {
       // Get the product ID from the query parameters
       const productId = req.query.id;
-
+      
       // If the product ID is missing, return a 400 Bad Request response
       if (!productId) {
         return res.status(400).json({

@@ -24,10 +24,12 @@ module.exports = {
             // upload the new seller object and get the seller and all seller hashes
             const [sellerHash, allSellerHash] = await common.uploadReview("Seller", seller, id);
             console.log(sellerHash, allSellerHash)
-            // create the seller on the blockchain and get the saveHash
-            const saveHash = await Contract.createSeller(id, sellerHash, allSellerHash);
-            if (saveHash) {
-                return { success: true, message: "Seller Created SuccessFully", data: saveHash, error: null };
+            // create the seller on the blockchain and get the receipt
+            const receipt = await Contract.createSeller(id, sellerHash, allSellerHash);
+            if (receipt.status) {
+                const addTxn = await sellerUtils.addTxn(seller, receipt.transactionHash);
+                const hash = common.updateTxnHash("Seller", addTxn, id);
+                return { success: true, message: "Seller Created SuccessFully", data: receipt.status, error: null };
             } else {
                 return { success: false, message: "Unable to save seller hash to the blockchain", data: null, error: "ERROR Seller" };
             }
@@ -58,9 +60,17 @@ module.exports = {
                 common.uploadReview("Shopper", shopperReviewAdded, revieweeId)
             ]);
             // Save hash on blockchain
-            const saveHash = await Contract.addSellerShopperReview(sellerId, revieweeId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
-            if (saveHash) {
-                return { success: true, message: "Review Posted SuccessFully", data: saveHash, error: null};
+            const receipt = await Contract.addSellerShopperReview(sellerId, revieweeId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
+            if (receipt.status) {
+                const [addSellerTxn, addShopperTxn] = await Promise.all([
+                    sellerUtils.addTxn(reviewAdded, receipt.transactionHash),
+                    sellerUtils.addTxn(shopperReviewAdded, receipt.transactionHash)
+                ]);
+                await Promise.all([                   
+                    common.updateTxnHash("Seller" , addSellerTxn, sellerId),
+                    common.updateTxnHash("Shopper" , addShopperTxn, revieweeId)
+                ]);
+                return { success: true, message: "Review Posted SuccessFully", data: receipt, error: null};
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
@@ -97,9 +107,17 @@ module.exports = {
                 common.uploadReview("Seller", sellerDataJSON, id),
                 common.uploadReview("Shopper", shopperDataJSON, shopperId)
             ]);
-            const saveHash = await Contract.addReviewReply(productId, id, shopperId, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
-            if (saveHash) {
-                return { success: true, message: "Response Posted SuccessFully", data: saveHash, error: null };
+            const receipt = await Contract.addReviewReply(productId, id, shopperId, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
+            if (receipt.status) {
+                const [addSellerTxn, addShopperTxn] = await Promise.all([
+                    sellerUtils.addTxn(sellerDataJSON, receipt.transactionHash),
+                    sellerUtils.addTxn(shopperDataJSON, receipt.transactionHash)
+                ]);
+                await Promise.all([                   
+                    common.updateTxnHash("Seller" , addSellerTxn, id),
+                    common.updateTxnHash("Shopper" , addShopperTxn, shopperId)
+                ]);
+                return { success: true, message: "Response Posted SuccessFully", data: receipt, error: null };
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }

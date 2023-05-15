@@ -3,324 +3,266 @@ const Web3 = require("web3");
 const dotenv = require("dotenv");
 dotenv.config();
 // Contract Address
-const address = "0x0c43971dF4b8cf60A627119De3aa82d153d7f86a";
+const address = "0xC196540119d42A3EEaB0a5fc2F79E32D0c606645";
 //Contract ABI
 const ABI = [
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "productId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "productId",
+				"type": "uint256"
 			},
 			{
-				internalType: "string",
-				name: "productHash",
-				type: "string",
+				"internalType": "string",
+				"name": "productHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allProductHash",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "allProductHash",
+				"type": "string"
+			}
 		],
-		name: "createProduct",
-		outputs: [],
-		stateMutability: "nonpayable",
-		type: "function",
+		"name": "createProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "sellerId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "sellerId",
+				"type": "uint256"
 			},
 			{
-				internalType: "string",
-				name: "sellerHash",
-				type: "string",
+				"internalType": "string",
+				"name": "sellerHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allSellerHash",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "allSellerHash",
+				"type": "string"
+			}
 		],
-		name: "createSeller",
-		outputs: [],
-		stateMutability: "nonpayable",
-		type: "function",
+		"name": "createSeller",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "shopperId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "shopperId",
+				"type": "uint256"
 			},
 			{
-				internalType: "string",
-				name: "shopperHash",
-				type: "string",
+				"internalType": "string",
+				"name": "shopperHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allShopperHash",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "allShopperHash",
+				"type": "string"
+			}
 		],
-		name: "createShopper",
-		outputs: [],
-		stateMutability: "nonpayable",
-		type: "function",
+		"name": "createShopper",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "productId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "productId",
+				"type": "uint256"
 			},
 			{
-				internalType: "uint256",
-				name: "sellerId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "sellerId",
+				"type": "uint256"
 			},
 			{
-				internalType: "uint256",
-				name: "shopperId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "shopperId",
+				"type": "uint256"
 			},
 			{
-				internalType: "string",
-				name: "productHash",
-				type: "string",
+				"internalType": "string",
+				"name": "productHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "sellerHash",
-				type: "string",
+				"internalType": "string",
+				"name": "sellerHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "shopperHash",
-				type: "string",
+				"internalType": "string",
+				"name": "shopperHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allProductHash",
-				type: "string",
+				"internalType": "string",
+				"name": "allProductHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allSellerHash",
-				type: "string",
+				"internalType": "string",
+				"name": "allSellerHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allShopperHash",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "allShopperHash",
+				"type": "string"
+			}
 		],
-		name: "setReviewResponse",
-		outputs: [],
-		stateMutability: "nonpayable",
-		type: "function",
+		"name": "setReviewResponse",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "sellerId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "sellerId",
+				"type": "uint256"
 			},
 			{
-				internalType: "uint256",
-				name: "shopperId",
-				type: "uint256",
+				"internalType": "uint256",
+				"name": "shopperId",
+				"type": "uint256"
 			},
 			{
-				internalType: "string",
-				name: "sellerHash",
-				type: "string",
+				"internalType": "string",
+				"name": "sellerHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "shopperHash",
-				type: "string",
+				"internalType": "string",
+				"name": "shopperHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allShopperHash",
-				type: "string",
+				"internalType": "string",
+				"name": "allSellerHash",
+				"type": "string"
 			},
 			{
-				internalType: "string",
-				name: "allSellerHash",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "allShopperHash",
+				"type": "string"
+			}
 		],
-		name: "setShopperSellerReview",
-		outputs: [],
-		stateMutability: "nonpayable",
-		type: "function",
+		"name": "setShopperSellerReview",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		inputs: [],
-		name: "allProducts",
-		outputs: [
+		"inputs": [],
+		"name": "allProducts",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
-		inputs: [],
-		name: "allSellers",
-		outputs: [
+		"inputs": [],
+		"name": "allSellers",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
-		inputs: [],
-		name: "allShoppers",
-		outputs: [
+		"inputs": [],
+		"name": "allShoppers",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "",
-				type: "uint256",
-			},
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
 		],
-		name: "productInfo",
-		outputs: [
+		"name": "viewProductReview",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "",
-				type: "uint256",
-			},
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
 		],
-		name: "sellerInfo",
-		outputs: [
+		"name": "viewSellerReview",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
-		inputs: [
+		"inputs": [
 			{
-				internalType: "uint256",
-				name: "",
-				type: "uint256",
-			},
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
 		],
-		name: "shopperInfo",
-		outputs: [
+		"name": "viewShopperReview",
+		"outputs": [
 			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
 		],
-		stateMutability: "view",
-		type: "function",
-	},
-	{
-		inputs: [
-			{
-				internalType: "uint256",
-				name: "_id",
-				type: "uint256",
-			},
-		],
-		name: "viewProductReview",
-		outputs: [
-			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
-		],
-		stateMutability: "view",
-		type: "function",
-	},
-	{
-		inputs: [
-			{
-				internalType: "uint256",
-				name: "_id",
-				type: "uint256",
-			},
-		],
-		name: "viewSellerReview",
-		outputs: [
-			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
-		],
-		stateMutability: "view",
-		type: "function",
-	},
-	{
-		inputs: [
-			{
-				internalType: "uint256",
-				name: "_id",
-				type: "uint256",
-			},
-		],
-		name: "viewShopperReview",
-		outputs: [
-			{
-				internalType: "string",
-				name: "",
-				type: "string",
-			},
-		],
-		stateMutability: "view",
-		type: "function",
-	},
-];
-
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
 /**
  * Initialize a new instance of the Web3 library using the specified RPC provider URL.
  * @param {string} process.env.RPC - The URL of the Ethereum node to connect to.
@@ -399,11 +341,9 @@ module.exports = {
 					.sendSignedTransaction(signPromise.rawTransaction)
 					.on("receipt", async (receipt) => {
 						console.log(receipt);
-						if (receipt.status) {
-							resolve(true);
-						} else {
-							resolve(false);
-						}
+						
+						resolve(receipt);
+						
 					});
 			} catch (error) {
 				console.log(error);
@@ -442,11 +382,7 @@ module.exports = {
 					.sendSignedTransaction(signPromise.rawTransaction)
 					.on("receipt", async (receipt) => {
 						console.log(receipt);
-						if (receipt.status) {
-							resolve(true);
-						} else {
-							resolve(false);
-						}
+						resolve(receipt);
 					});
 			} catch (error) {
 				console.log(error);
@@ -485,11 +421,7 @@ module.exports = {
 					.sendSignedTransaction(signPromise.rawTransaction)
 					.on("receipt", async (receipt) => {
 						console.log(receipt);
-						if (receipt.status) {
-							resolve(true);
-						} else {
-							resolve(false);
-						}
+						resolve(receipt);
 					});
 			} catch (error) {
 				console.log(error);
@@ -538,11 +470,7 @@ module.exports = {
 					.sendSignedTransaction(signPromise.rawTransaction)
 					.on("receipt", async (receipt) => {
 						console.log(receipt);
-						if (receipt.status) {
-							resolve(true);
-						} else {
-							resolve(false);
-						}
+						resolve(receipt);
 					});
 			} catch (error) {
 				console.log(error.message);
@@ -606,11 +534,7 @@ module.exports = {
 				await web3.eth
 					.sendSignedTransaction(signPromise.rawTransaction)
 					.on("receipt", async (receipt) => {
-						if (receipt.status) {
-							resolve(true);
-						} else {
-							resolve(false);
-						}
+						resolve(receipt);
 					});
 			} catch (error) {
 				console.log(error.message);

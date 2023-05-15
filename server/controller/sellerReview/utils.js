@@ -146,5 +146,10 @@ module.exports = {
             })
         }
         return dataJson;
+    },
+
+    async addTxn(JSON, hash){
+        JSON.txnHash = hash;
+        return JSON;
     }
 }

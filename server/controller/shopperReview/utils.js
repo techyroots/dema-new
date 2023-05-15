@@ -158,5 +158,9 @@ module.exports = {
         }
         console.log(data, "fyghjkl")
         return data;
+    },
+    async addTxn(JSON, hash){
+        JSON.txnHash = hash;
+        return JSON;
     }
 }

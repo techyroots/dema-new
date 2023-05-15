@@ -26,11 +26,13 @@ module.exports = {
             const [shopperHash, allShopperHash] = await common.uploadReview("Shopper", shopper, id)
 
             // Save the shopper hash to the blockchain
-            const saveHash = await Contract.createShopper(id, shopperHash, allShopperHash);
+            const receipt = await Contract.createShopper(id, shopperHash, allShopperHash);
 
             // Return success or failure based on the result of saving the hash
-            if (saveHash) {
-                return { success: true, message: "Shopper Created SuccessFully", data: "", error: "" };
+            if (receipt.status) {
+                const addTxn = await shopperUtils.addTxn(shopper, receipt.transactionHash);
+                const hash = common.updateTxnHash("Shopper", addTxn, id);
+                return { success: true, message: "Shopper Created SuccessFully", data: receipt.status, error: "" };
             } else {
                 return { success: false, message: "Unable to save shopper hash to the blockchain", data: "", error: "ERROR Shopper" };
             }
@@ -62,9 +64,17 @@ module.exports = {
                 common.uploadReview("Seller", sellerReviewAdded, revieweeId)
             ]);
             // Save hash on blockchain
-            const saveHash = await Contract.addSellerShopperReview(revieweeId, shopperId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
-            if (saveHash) {
-                return { success: true, message: "Review Posted SuccessFully", data: saveHash, error: null };
+            const receipt = await Contract.addSellerShopperReview(revieweeId, shopperId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
+            if (receipt.status) {
+                const [addSellerTxn, addShopperTxn] = await Promise.all([
+                    shopperUtils.addTxn(sellerReviewAdded, receipt.transactionHash),
+                    shopperUtils.addTxn(reviewAdded, receipt.transactionHash)
+                ]);
+                await Promise.all([                   
+                    common.updateTxnHash("Seller" , addSellerTxn, revieweeId),
+                    common.updateTxnHash("Shopper" , addShopperTxn, shopperId)
+                ]);
+                return { success: true, message: "Review Posted SuccessFully", data: receipt, error: null };
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
@@ -104,9 +114,17 @@ module.exports = {
             ]);
 
             // Save the updated shopper and seller hash to the blockchain
-            const saveHash = await Contract.addReviewReply(productId, sellerId, id, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
-            if (saveHash) {
-                return { success: true, message: "Response posted successfully", data: saveHash, error: null };
+            const receipt = await Contract.addReviewReply(productId, sellerId, id, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
+            if (receipt.status) {
+                const [addSellerTxn, addShopperTxn] = await Promise.all([
+                    shopperUtils.addTxn(sellerDataJSON, receipt.transactionHash),
+                    shopperUtils.addTxn(responsedataJSON, receipt.transactionHash)
+                ]);
+                await Promise.all([                   
+                    common.updateTxnHash("Seller" , addSellerTxn, sellerId),
+                    common.updateTxnHash("Shopper" , addShopperTxn, id)
+                ]);
+                return { success: true, message: "Response posted successfully", data: receipt, error: null };
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }

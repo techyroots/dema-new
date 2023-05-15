@@ -27,10 +27,12 @@ module.exports = {
             // upload the new product object and get the product and all product hashes
             const [productHash, allProductHash] = await common.uploadReview("Product", product, id);
             console.log(productHash, allProductHash,"productHash, allProductHash")
-            // create the product on the blockchain and get the saveHash
-            const saveHash = await Contract.createProduct(id, productHash, allProductHash);
-            if (saveHash) {
-                return { success: true, message: "Product Created SuccessFully", data: saveHash, error: null };
+            // create the product on the blockchain and get the receipt
+            const receipt = await Contract.createProduct(id, productHash, allProductHash);
+            if (receipt.status) {
+                const addTxn = await productUtils.addTxn(product, receipt.transactionHash);
+                const hash = common.updateTxnHash("Product", addTxn, id);
+                return { success: true, message: "Product Created SuccessFully", data: receipt.status, error: null };
             } else {
                 return { success: false, message: "Unable to save product hash to the blockchain", data: null, error: "ERROR" };
             }
@@ -73,11 +75,21 @@ module.exports = {
             ]);
             console.log( shopperInfo, "productInfo, sellerInfo, shopperInfo")
             // Saving the review reply on the blockchain
-            const saveHash = await Contract.addReviewReply(id, sellerId, reviewerId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
+            const receipt = await Contract.addReviewReply(id, sellerId, reviewerId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
 
             // Return the success or failure of saving the hash
-            if (saveHash) {
-                return { success: true, message: "Review Posted SuccessFully", data: saveHash, error: null};
+            if (receipt.status) {
+                const [addProductTxn, addSellerTxn, addShopperTxn] = await Promise.all([
+                    productUtils.addTxn(productReviewAdded, receipt.transactionHash),
+                    productUtils.addTxn(sellerReviewAdded, receipt.transactionHash),
+                    productUtils.addTxn(shopperReviewAdded, receipt.transactionHash)
+                ]);
+                await Promise.all([
+                    common.updateTxnHash("Product", addProductTxn, id),
+                    common.updateTxnHash("Seller" , addSellerTxn, sellerId),
+                    common.updateTxnHash("Shopper" , addShopperTxn, reviewerId)
+                ]);
+                return { success: true, message: "Review Posted SuccessFully", data: receipt, error: null};
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
@@ -123,10 +135,20 @@ module.exports = {
                     common.uploadReview("Seller", sellerResponseData, productJSON.sellerId),
             ]);
             // Saving the response on the blockchain
-            const saveHash = await Contract.addReviewReply(productId, productJSON.sellerId, shopperId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
+            const receipt = await Contract.addReviewReply(productId, productJSON.sellerId, shopperId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
             // Return the success or failure of saving the hash
-            if (saveHash) {
-                return { success: true, message: "Response Posted SuccessFully", data: saveHash, error: null };
+            if (receipt.status) {
+                const [addProductTxn, addShopperTxn, addSellerTxn] = await Promise.all([
+                    productUtils.addTxn(responseJSON, receipt.transactionHash),
+                    productUtils.addTxn(shopperResponseData, receipt.transactionHash),
+                    productUtils.addTxn(sellerResponseData, receipt.transactionHash),
+                ]);
+                await Promise.all([
+                    common.uploadReview("Product", addProductTxn, productId),
+                    common.updateTxnHash("Seller" , addSellerTxn, productJSON.sellerId),
+                    common.updateTxnHash("Shopper" , addShopperTxn, shopperId)
+                ]);
+                return { success: true, message: "Response Posted SuccessFully", data: receipt, error: null };
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
             }
@@ -142,8 +164,10 @@ module.exports = {
     async getData(id) {
         try{
             const productHash = await Contract.viewProductReview(Number(id))
+            console.log(productHash,"productHash")
             if (productHash || productHash.length) {
                 const productJSON = JSON.parse(await IpfsService.gateway(productHash));
+                console.log(productJSON,"productJSON")
                 const productImageURL = await IpfsService.getImageURL(productJSON.productImage);
                 const hash = await IpfsService.getImageURL(productHash);
                 return { success: true, message: "Product Details found", data: productJSON, URL: hash, imageURL: productImageURL, error: null }
@@ -161,6 +185,7 @@ module.exports = {
     async getAllData() {
         try{
             const allProductHash = await Contract.getAllProductReview()
+            console.log(allProductHash,"all")
             if (!allProductHash.length || allProductHash != 0 && allProductHash !== "0") {
                 const allProductJSON = JSON.parse(await IpfsService.gateway(allProductHash));
                 return { success: true, message: "All product details found", data: allProductJSON, error: null }
