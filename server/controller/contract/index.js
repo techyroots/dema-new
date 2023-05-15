@@ -3,7 +3,7 @@ const Web3 = require("web3");
 const dotenv = require("dotenv");
 dotenv.config();
 // Contract Address
-const address = "0xC196540119d42A3EEaB0a5fc2F79E32D0c606645";
+const address = "0x83614E6136A295312B36e7eC5Bb8598E7E80Cb77";
 //Contract ABI
 const ABI = [
 	{
