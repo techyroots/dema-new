@@ -916,3 +916,18 @@ ul#inneourtmenutb .nav-link:hover {
   color: rgb(3, 128, 190);
   cursor: pointer;
 }
+.back-bttn{
+  display: flex;
+  justify-content: space-between;
+}
+
+.head-bttn{
+  text-decoration: none !important;
+    cursor: pointer;
+    background-color: #17202b !important;
+    color: #fff !important;
+    box-shadow: rgb(255 255 255) 0px 1px 7px -3px;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+}

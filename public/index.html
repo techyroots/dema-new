@@ -121,6 +121,8 @@
                 <button class="backSeller" id="backSeller">
                   <i class="bi bi-arrow-left"></i> Back
                 </button>
+
+                <a class="head-bttn" target = "_blank" href="#" id="sellerTxnHash">Transaction Hash</a>
               </div>
 
               <div class="row mt-5">
@@ -196,6 +198,7 @@
                 <button class="backSeller">
                   <i class="bi bi-arrow-left"></i> Back
                 </button>
+                
               </div>
 
               <h1 class="text-center Table-heading mt-5">Reputation Score</h1>
@@ -268,6 +271,7 @@
                 <button class="backShopper" id="backShopper">
                   <i class="bi bi-arrow-left"></i> Back
                 </button>
+                <a target = "_blank" class="head-bttn" href="#" id="shopperTxnHash">Transaction Hash</a>
               </div>
               <div class="row mt-5">
                 <div class="col-md-3">
@@ -404,6 +408,7 @@
               <button class="backProduct" id="backProduct">
                 <i class="bi bi-arrow-left"></i> Back
               </button>
+              <a target = "_blank" class="head-bttn" href="#" id="productTxnHash">Transaction Hash</a>
             </div>
             <div class="Dash-section mt-3">
               <div class="Productheader">
@@ -702,61 +707,7 @@
       document.getElementById("lengthErrorForShopper").innerHTML = "Enter only 255 characters";
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-  // //onload seller id data
-  // function onloadSellerSingle() {
-  //   let params = new URL(document.location).searchParams;
-  //   // 	console.log("params",params)
-  //   let pid = params.get("seller_id");
-  //   // 	console.log("check",pid)
-  //   if (pid) {
-  //     getSellerById(pid);
-  //   }
-  // }
-  // onloadSellerSingle();
-
-
-  // function onloadShopperRepo() {
-  //   let params = new URL(document.location).searchParams;
-  //   // 	console.log("params",params)
-  //   let pid = params.get("pid");
-
-  //   console.log("check", pid)
-  //   if (pid) {
-  //     // getShopperRepo(pid);
-  //   }
-  // }
-  // onloadShopperRepo();
-
-
-
-
-
-
-  // //onload shopper id data
-  // function onloadShopperSingle() {
-  //   let params = new URL(document.location).searchParams;
-  //   // 	console.log("params",params)
-  //   let pid = params.get("product");
-  //   let ipfs = params.get("ipfs");
-  //   // 	console.log("check",pid)
-  //   if (pid && ipfs) {
-  //     getShopperById(pid, ipfs);
-  //   }
-  // }
-  // onloadShopperSingle();
-
-
+  
 </script>
 
 </html>

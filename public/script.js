@@ -1,4 +1,5 @@
 let baseUrl = "http://localhost:7777/api";
+let explorer = "https://mumbai.polygonscan.com/tx/"
 
 //-----------------------------------------Seller Starts---------------------------------------------//
 
@@ -116,6 +117,7 @@ async function getSellerDetails(id) {
     }
     el1.innerHTML = output;
     document.getElementById("loader4").style.display = "none";
+    document.getElementById("sellerTxnHash").href = explorer + getSellerinfo.txnHash
     document.getElementById("sellerIdBox").innerHTML = getSellerinfo.id;
     document.getElementById("sellerNameBox").innerHTML = getSellerinfo.name;
     document.getElementById("sellerWalletBox").innerHTML = getSellerinfo.address.slice(0, 4) + "...." + getSellerinfo.address.slice(-5);
@@ -346,6 +348,7 @@ async function getShopperDetails(id) {
     el1.innerHTML = output;
 
     document.getElementById("loader5").style.display = "none";
+    document.getElementById("shopperTxnHash").href = explorer + getShopperinfo.txnHash
     document.getElementById("shopperIdBox").innerHTML = getShopperinfo.id;
     document.getElementById("shopperNameBox").innerHTML = getShopperinfo.name;
     document.getElementById("shopperWalletBox").innerHTML = getShopperinfo.address.slice ? getShopperinfo.address.slice(0, 4) + "...." + getShopperinfo.address.slice(-5) : "";
@@ -512,6 +515,7 @@ async function getProductDetails(id) {
     let productInfo = await getProductReviewById(id);
     console.log(productInfo, "productInfo")
     document.getElementById("productTitle").innerHTML = productInfo.data.productName;
+    document.getElementById("productTxnHash").href = explorer + productInfo.data.txnHash;
     document.getElementById("productDesp").innerHTML = productInfo.data.productDescription;
     document.getElementById("productRating").innerHTML = productInfo.data.avgRating ? (productInfo.data.avgRating) : 0;
     document.getElementById("productSellerBy").innerHTML = "Sell by " + productInfo.data.sellerName;
