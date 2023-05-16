@@ -25,7 +25,7 @@ module.exports = {
             sellerId,
             sellerName,
             avgRating,
-            txnHash : 0,
+            txnHash: 0,
             reviews: [],
         };
     },
@@ -160,9 +160,21 @@ module.exports = {
         });
         return dataJson;
     },
-    async addTxn(productJSON, hash){
-        console.log(productJSON.txnHash, hash, "product")
+    
+    /**
+     * This function is used to add a txn hash to a review
+     * @param {Object} productJSON - The JSON object of product data
+     * @param {Number} hash - The transaction hash
+     * @returns {Object} - Returns the updated JSON object of product data
+     */
+    async addTxn(productJSON, hash) {
+        // Log the current txnHash and the new hash for debugging purposes
+        console.log(productJSON.txnHash, hash, "product");
+
+        // Update the txnHash property of the productJSON with the new hash
         productJSON.txnHash = hash;
+
+        // Return the updated productJSON
         return productJSON;
     }
 };

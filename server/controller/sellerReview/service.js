@@ -27,7 +27,9 @@ module.exports = {
             // create the seller on the blockchain and get the receipt
             const receipt = await Contract.createSeller(id, sellerHash, allSellerHash);
             if (receipt.status) {
+                // update the transaction hash in seller object using the sellerUtils module
                 const addTxn = await sellerUtils.addTxn(seller, receipt.transactionHash);
+                // upload the new seller object
                 const hash = common.updateTxnHash("Seller", addTxn, id);
                 return { success: true, message: "Seller Created SuccessFully", data: receipt.status, error: null };
             } else {
@@ -62,10 +64,12 @@ module.exports = {
             // Save hash on blockchain
             const receipt = await Contract.addSellerShopperReview(sellerId, revieweeId, sellerInfo[0], shopperInfo[0], sellerInfo[1], shopperInfo[1]);
             if (receipt.status) {
+                // update the transaction hash in seller, shopper JSON using the sellerUtils module
                 const [addSellerTxn, addShopperTxn] = await Promise.all([
                     sellerUtils.addTxn(reviewAdded, receipt.transactionHash),
                     sellerUtils.addTxn(shopperReviewAdded, receipt.transactionHash)
                 ]);
+                 // Uploading updated JSON to storj and storing the hash in variables
                 await Promise.all([                   
                     common.updateTxnHash("Seller" , addSellerTxn, sellerId),
                     common.updateTxnHash("Shopper" , addShopperTxn, revieweeId)
@@ -109,10 +113,12 @@ module.exports = {
             ]);
             const receipt = await Contract.addReviewReply(productId, id, shopperId, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
             if (receipt.status) {
+                // update the transaction hash in seller, shopper JSON using the sellerUtils module
                 const [addSellerTxn, addShopperTxn] = await Promise.all([
                     sellerUtils.addTxn(sellerDataJSON, receipt.transactionHash),
                     sellerUtils.addTxn(shopperDataJSON, receipt.transactionHash)
                 ]);
+                // Uploading updated JSON to storj and storing the hash in variables
                 await Promise.all([                   
                     common.updateTxnHash("Seller" , addSellerTxn, id),
                     common.updateTxnHash("Shopper" , addShopperTxn, shopperId)

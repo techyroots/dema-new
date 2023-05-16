@@ -159,6 +159,13 @@ module.exports = {
         console.log(data, "fyghjkl")
         return data;
     },
+    
+     /**
+     * This function is used to add a txn hash to a review
+     * @param {Object} JSON - The JSON object of shopper data
+     * @param {Number} hash - The transaction hash
+     * @returns {Object} - Returns the updated JSON object of product data
+     */
     async addTxn(JSON, hash){
         JSON.txnHash = hash;
         return JSON;

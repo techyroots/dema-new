@@ -3,7 +3,7 @@
  * @module product
  */
 const productUtils = require("./utils"); // importing utility functions
-const IpfsService = require("../ipfs/service"); // importing IPFS service module
+const IpfsService = require("../ipfs/service"); // importing storj service module
 const Contract = require("../contract/index"); // importing blockchain Contract module
 const common = require("./../common/common"); // importing common module
 
@@ -30,7 +30,9 @@ module.exports = {
             // create the product on the blockchain and get the receipt
             const receipt = await Contract.createProduct(id, productHash, allProductHash);
             if (receipt.status) {
+                // update the transaction hash in product object using the productUtils module
                 const addTxn = await productUtils.addTxn(product, receipt.transactionHash);
+                // upload the new product object
                 const hash = common.updateTxnHash("Product", addTxn, id);
                 return { success: true, message: "Product Created SuccessFully", data: receipt.status, error: null };
             } else {
@@ -67,7 +69,7 @@ module.exports = {
             ]);
             console.log(shopperReviewAdded,"shopperReviewAdded")
             console.log(sellerReviewAdded,"sellerReviewAdded")
-            // Uploading updated JSON to IPFS and storing the hash in variables
+            // Uploading updated JSON to storj and storing the hash in variables
             const [productInfo, sellerInfo, shopperInfo] = await Promise.all([
                 common.uploadReview("Product", productReviewAdded, id),
                 common.uploadReview("Seller" , sellerReviewAdded, sellerId),
@@ -79,11 +81,13 @@ module.exports = {
 
             // Return the success or failure of saving the hash
             if (receipt.status) {
+                // update the transaction hash in product, seller, shopper JSON using the productUtils module
                 const [addProductTxn, addSellerTxn, addShopperTxn] = await Promise.all([
                     productUtils.addTxn(productReviewAdded, receipt.transactionHash),
                     productUtils.addTxn(sellerReviewAdded, receipt.transactionHash),
                     productUtils.addTxn(shopperReviewAdded, receipt.transactionHash)
                 ]);
+                // Uploading updated JSON to storj and storing the hash in variables
                 await Promise.all([
                     common.updateTxnHash("Product", addProductTxn, id),
                     common.updateTxnHash("Seller" , addSellerTxn, sellerId),
@@ -120,7 +124,7 @@ module.exports = {
             const oldJSON = JSON.parse(getOldJSON);
             // Add the response to the review
             const responseJSON = await productUtils.addResponse(productJSON, responderId, responseText, responderType, shopperId, oldJSON.name);
-            // Upload the updated review to IPFS
+            // Upload the updated review to storj
             const [productInfo, shopperDataJSON, sellerDataJSON] = await Promise.all([
                 common.uploadReview("Product", responseJSON, productId),
                 Contract.viewShopperReview(Number(shopperId)).then(shopperData => IpfsService.gateway(shopperData).then(getShopperJSON => JSON.parse(getShopperJSON))),
@@ -129,7 +133,7 @@ module.exports = {
              // Add the response to the shopper's and seller's JSON data
             const [shopperResponseData, sellerResponseData] = await Promise.all([productUtils.addShopperSellerResponse(shopperDataJSON, productId, oldJSON.name, shopperId, responderId, responseText, responderType),
                 productUtils.addShopperSellerResponse(sellerDataJSON, productId, oldJSON.name, shopperId, responderId, responseText, responderType)]);
-            // Upload the updated shopper's and seller's JSON data to IPFS
+            // Upload the updated shopper's and seller's JSON data to storj
             const [shopperInfo, sellerInfo] = await Promise.all([
                     common.uploadReview("Shopper" , shopperResponseData, shopperId),
                     common.uploadReview("Seller", sellerResponseData, productJSON.sellerId),
@@ -138,11 +142,13 @@ module.exports = {
             const receipt = await Contract.addReviewReply(productId, productJSON.sellerId, shopperId, productInfo[0], sellerInfo[0], shopperInfo[0], productInfo[1], sellerInfo[1], shopperInfo[1]);
             // Return the success or failure of saving the hash
             if (receipt.status) {
+                // update the transaction hash in product, seller, shopper JSON using the productUtils module
                 const [addProductTxn, addShopperTxn, addSellerTxn] = await Promise.all([
                     productUtils.addTxn(responseJSON, receipt.transactionHash),
                     productUtils.addTxn(shopperResponseData, receipt.transactionHash),
                     productUtils.addTxn(sellerResponseData, receipt.transactionHash),
                 ]);
+                // Uploading updated JSON to storj and storing the hash in variables
                 await Promise.all([
                     common.uploadReview("Product", addProductTxn, productId),
                     common.updateTxnHash("Seller" , addSellerTxn, productJSON.sellerId),

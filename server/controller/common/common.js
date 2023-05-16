@@ -38,7 +38,7 @@ module.exports = {
         console.log(oldReview,"oldReview")
         if (!oldReview.length || (oldReview != "" && oldReview != 0)) {
           console.log("inside")
-          oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
+          oldReviews = (await IpfsService.gateway(oldReview));
         }
         // Generate all product reviews with new review and update old reviews
         allReviews = productUtils.allProduct(oldReviews, review, type + id);
@@ -81,7 +81,7 @@ module.exports = {
       JSON.stringify(review)
     );
     // type + id is the hash where type means product, seller or shopper and id means id of product, shopper and seller
-    const isUploaded = await IpfsService.pinJSONToIPFS(type + id, filename);
+    const isUploaded = await IpfsService.pinJSONToIPFS( path.join(__dirname, `../../../${filename}`));
 
     // Write the updated reviews to a file and upload it to IPFS
     fs.writeFileSync(
@@ -89,8 +89,7 @@ module.exports = {
       JSON.stringify(allReviews)
     );
     const isUploadedAll = await IpfsService.pinJSONToIPFS(
-      `All${type}`,
-      `All${filename}`
+      path.join(__dirname, `../../../All${filename}`)
     );
 
     // Return an array containing the IPFS hash of the uploaded review and the IPFS hash of all reviews of the same type
@@ -100,39 +99,42 @@ module.exports = {
   async updateTxnHash(type, review, id) {
     // Initialize variables
     let filename = "";
+  
     // Switch based on the type of review
     switch (type) {
       case "Product":
-        // Set filename and get old reviews for product review
-        filename = "product.json";      
+        // Set filename for product review
+        filename = "product.json";
         break;
-
+  
       case "Shopper":
-        // Set filename and get old reviews for shopper review
+        // Set filename for shopper review
         filename = "shopper.json";
-       
         break;
-
+  
       case "Seller":
-        // Set filename and get old reviews for seller review
+        // Set filename for seller review
         filename = "seller.json";
-       
         break;
-
+  
       default:
         // Throw an error if an invalid review type is provided
         throw new Error("Invalid review type");
     }
-    // Write the new review to a file and upload it to IPFS
+  
+    // Write the new review to a file
     fs.writeFileSync(
       path.join(__dirname, `../../../${filename}`),
       JSON.stringify(review)
     );
-
-    // type + id is the hash where type means product, seller or shopper and id means id of product, shopper and seller
-    const isUploaded = await IpfsService.pinJSONToIPFS(type + id, filename);
-
-    // Return an array containing the IPFS hash of the uploaded review and the IPFS hash of all reviews of the same type
+  
+    // Upload the file to IPFS and get the IPFS hash
+    const isUploaded = await IpfsService.pinJSONToIPFS(
+      path.join(__dirname, `../../../${filename}`)
+    );
+  
+    // Return an array containing the IPFS hash of the uploaded review
     return [isUploaded.key];
-  },
+  }
+  ,
 };
