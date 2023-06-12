@@ -166,7 +166,7 @@ module.exports = {
             const productHash = await Contract.viewProductReview(Number(id))
             if (productHash || productHash.length) {
                 const productJSON = (await IpfsService.gateway(productHash));
-                return { success: true, message: "Product Details found", data: productJSON, URL: 0, imageURL: 0, error: null }
+                return { success: true, message: "Product Details found", data: productJSON, error: null }
             } else {
                 return { success: false, message: "Product Id not exist", data: null, error: null }
             }
