@@ -22,15 +22,11 @@ module.exports = {
             // create a new seller object using the sellerUtils module
             const seller = sellerUtils.create(id, name, address, 0);
             // upload the new seller object and get the seller and all seller hashes
-            const [sellerHash, allSellerHash] = await common.uploadReview("Seller", seller, id);
+            const [sellerHash, allSellerHash, sellerCid] = await common.uploadReview("Seller", seller, id);
             console.log(sellerHash, allSellerHash)
             // create the seller on the blockchain and get the receipt
             const receipt = await Contract.createSeller(id, sellerHash, allSellerHash);
             if (receipt.status) {
-                // update the transaction hash in seller object using the sellerUtils module
-                const addTxn = await sellerUtils.addTxn(seller, receipt.transactionHash);
-                // upload the new seller object
-                const hash = common.updateTxnHash("Seller", addTxn, id);
                 return { success: true, message: "Seller Created SuccessFully", data: receipt.status, error: null };
             } else {
                 return { success: false, message: "Unable to save seller hash to the blockchain", data: null, error: "ERROR Seller" };
@@ -70,10 +66,12 @@ module.exports = {
                     sellerUtils.addTxn(shopperReviewAdded, receipt.transactionHash)
                 ]);
                  // Uploading updated JSON to storj and storing the hash in variables
-                await Promise.all([                   
-                    common.updateTxnHash("Seller" , addSellerTxn, sellerId),
-                    common.updateTxnHash("Shopper" , addShopperTxn, revieweeId)
+                const [seller, shopper] = await Promise.all([                   
+                    common.updateTxnHash(addSellerTxn, "Seller" + sellerId),
+                    common.updateTxnHash(addShopperTxn, "Shopper" + revieweeId)
                 ]);
+                // Again update the new HASH on blockchain after updating TxnHash
+                await Contract.addSellerShopperReview(sellerId, revieweeId, seller, shopper, sellerInfo[1], shopperInfo[1]);       
                 return { success: true, message: "Review Posted SuccessFully", data: receipt, error: null};
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
@@ -99,19 +97,20 @@ module.exports = {
         try {
 
             const isIdExist = await (responderType == 1 ? Contract.viewShopperReview(Number(responderId)) : Contract.viewSellerReview(Number(responderId)));
-            const getOldJSON = await IpfsService.gateway(isIdExist);
-            const OldJSON = JSON.parse(getOldJSON);
-
+            const OldJSON = await IpfsService.gateway(isIdExist);
+           
             const [sellerDataJSON, shopperDataJSON] = await Promise.all([
-                sellerUtils.addResponse(dataJSON, shopperId, responderId, responseText, responderType, OldJSON.name),
-                Contract.viewShopperReview(Number(shopperId)).then(shopperData => IpfsService.gateway(shopperData).then(getShopperJSON => sellerUtils.addShopperResponse(JSON.parse(getShopperJSON), id, responderId, responseText, responderType, OldJSON.name))),
+                sellerUtils.addResponse(dataJSON, shopperId, responderId, responseText, responderType, OldJSON.pin.meta.name),
+                Contract.viewShopperReview(Number(shopperId)).then(shopperData => IpfsService.gateway(shopperData).then(getShopperJSON => sellerUtils.addShopperResponse((getShopperJSON.pin.meta), id, responderId, responseText, responderType, OldJSON.pin.meta.name))),
             ]);
-            console.log(sellerDataJSON, shopperDataJSON,"sellerDataJSON, shopperDataJSON")
+            
             const [sellerInfo, shopperInfo] = await Promise.all([
                 common.uploadReview("Seller", sellerDataJSON, id),
                 common.uploadReview("Shopper", shopperDataJSON, shopperId)
             ]);
-            const receipt = await Contract.addReviewReply(productId, id, shopperId, "Product" + productId, sellerInfo[0], shopperInfo[0], 'AllProduct', sellerInfo[1], shopperInfo[1]);
+            const productHash    = await Contract.viewProductReview(productId);
+            const allProductHash = await Contract.getAllProductReview();
+            const receipt = await Contract.addReviewReply(productId, id, shopperId, productHash, sellerInfo[0], shopperInfo[0], allProductHash, sellerInfo[1], shopperInfo[1]);
             if (receipt.status) {
                 // update the transaction hash in seller, shopper JSON using the sellerUtils module
                 const [addSellerTxn, addShopperTxn] = await Promise.all([
@@ -119,10 +118,13 @@ module.exports = {
                     sellerUtils.addTxn(shopperDataJSON, receipt.transactionHash)
                 ]);
                 // Uploading updated JSON to storj and storing the hash in variables
-                await Promise.all([                   
-                    common.updateTxnHash("Seller" , addSellerTxn, id),
-                    common.updateTxnHash("Shopper" , addShopperTxn, shopperId)
+                const [seller, shopper] = await Promise.all([                   
+                    common.updateTxnHash(addSellerTxn, "Seller" + id),
+                    common.updateTxnHash(addShopperTxn, "Shopper" + shopperId)
                 ]);
+                // Again update the new HASH on blockchain after updating TxnHash
+                await Contract.addReviewReply(productId, id, shopperId, productHash, seller, shopper, allProductHash, sellerInfo[1], shopperInfo[1]);
+            
                 return { success: true, message: "Response Posted SuccessFully", data: receipt, error: null };
             } else {
                 return { success: false, message: "Unable to save hash to the blockchain", data: null, error: "ERROR" };
@@ -140,9 +142,9 @@ module.exports = {
         try {
             const sellerHash = await Contract.viewSellerReview(Number(id))
             if (sellerHash || sellerHash.length) {
-                const sellerJSON = JSON.parse(await IpfsService.gateway(sellerHash));
-                const URL = await IpfsService.getImageURL(sellerHash);
-                return { success: true, message: "Seller Details Found", data: sellerJSON, URL: URL, error: null }
+                const sellerJSON = (await IpfsService.gateway(sellerHash));
+                // const URL = await IpfsService.getImageURL(sellerHash);
+                return { success: true, message: "Seller Details Found", data: sellerJSON, URL: 0, error: null }
             } else {
                 return { success: false, message: "Seller Id not exist", data: null, error: null }
             }
@@ -159,8 +161,8 @@ module.exports = {
     async getAllData() {
         try{
             const allSellerHash = await Contract.getAllSellerReview();
-            if (allSellerHash || allSellerHash.length) {
-                const allSellerJSON = JSON.parse(await IpfsService.gateway(allSellerHash));
+            if (allSellerHash != 0 || allSellerHash != '0') {
+                const allSellerJSON = (await IpfsService.gateway(allSellerHash));
                 return { success: true, message: "All seller details found", data: allSellerJSON, error: null }
             } else {
                 return { success: false, message: "All seller details not found", data: null, error: null }

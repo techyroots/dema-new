@@ -45,6 +45,7 @@ route.get("/all-product-review", productReview.getAllData);
 //GET request to fetch all seller reviews
 route.get("/all-seller-review", sellerReview.getAllData);
 
+
 //GET request to fetch all seller reviews
 route.use(Validator.checkValidation);
 

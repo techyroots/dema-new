@@ -12,7 +12,6 @@ module.exports = {
      * @returns {Object} - The created shopper object.
      */
     create(id, name, address, avgRating) {
-        console.log(avgRating)
         return {
             id: id,
             name: name,
@@ -38,7 +37,6 @@ module.exports = {
      * @returns {Object} - The updated shopper object.
      */
     addReview(oldJson, revieweeId, reviewText, rating, name, productId) {
-        const index = oldJson.sellerReviews.findIndex(sellerReview => sellerReview.reviewerId === revieweeId);
         const obj = {
             productId,
             revieweeId,
@@ -47,14 +45,19 @@ module.exports = {
             rating,
             timestamp: new Date(),
             responses: []
-        }
-        if (index >= 0) {
-            oldJson.sellerReviews[index] = obj;
+        };
+        if (!oldJson.hasOwnProperty('sellerReviews') && !Array.isArray(oldJson.sellerReviews)) {
+            oldJson.sellerReviews = [];
+        } 
+        if (oldJson.sellerReviews.length || Object.keys(oldJson.sellerReviews).length || Array.isArray(oldJson.sellerReviews)) {
+            const newIndex = Object.keys(oldJson.sellerReviews).length;
+            oldJson.sellerReviews[newIndex] = obj
         } else {
-            oldJson.sellerReviews.push(obj);
+            oldJson.sellerReviews = [obj]
         }
         return oldJson;
-    },
+    }
+    ,
     /**
     addSellerReview - Function to add seller review to the shopper JSON
     @param {object} oldJson Old JSON data of the shopper
@@ -66,7 +69,11 @@ module.exports = {
     @returns {object} JSON object with the updated review
     */
     async addSellerReview(oldJson, id, reviewText, rating, name, productId) {
-        oldJson.sellerReviews.push({
+        if (oldJson.hasOwnProperty('sellerReviews') == false && !Array.isArray(oldJson.sellerReviews)) {
+            oldJson.sellerReviews = [];
+        }
+
+        let obj = {
             productId,
             reviewerId: id,
             reviewerName: name,
@@ -74,7 +81,15 @@ module.exports = {
             rating,
             timestamp: new Date(),
             responses: []
-        });
+        };
+    
+        if (oldJson.sellerReviews.length || Object.keys(oldJson.sellerReviews).length || Array.isArray(oldJson.sellerReviews)) {
+            const newIndex = Object.keys(oldJson.sellerReviews).length;
+            oldJson.sellerReviews[newIndex] = obj
+        } else {
+            oldJson.sellerReviews = [obj]
+        }
+
         oldJson.avgRating = await averageRating.getAverageRating(oldJson.sellerReviews);
         return oldJson;
     },
@@ -87,23 +102,37 @@ module.exports = {
     @returns {array} Array with updated shopper data
     */
     async allShopper(oldData, data, hash) {
-        const avgRating = await averageRating.getAverageRating(data.sellerToShopperReviews)
-        const totalReviews = data.sellerToShopperReviews.length;
-        const totalProducts = data.productReviews.length;
-        const obj = { id: data.id, totalProducts, totalReviews, rating: avgRating, IPFS: hash };
-        if (Array.isArray(oldData)) {
-            const index = oldData.findIndex((item) => item.id === data.id);
-            if (index >= 0) {
-                oldData[index] = obj;
-            } else {
-                oldData.push(obj);
+        const totalReviews = data.sellerToShopperReviews ? Object.keys(data.sellerToShopperReviews).length : 0;
+        let avgRating = data.sellerToShopperReviews ? await averageRating.getAverageRating(data.sellerToShopperReviews) : 0;
+        let totalProducts = data.productReviews? Object.keys(data.productReviews).length : 0;
+        const obj = {
+            id: data.id,
+            totalProducts,
+            totalReviews,
+            rating: avgRating,
+            IPFS: hash
+        };
+
+        if (oldData.length || Object.keys(oldData).length) {
+            let found = false;
+            for (const index in oldData.pin.meta) {
+                if (oldData.pin.meta[index].id === data.id) {
+                    found = true;
+                    // Replace the object at the current index
+                    oldData.pin.meta[index] = obj;
+                    break;
+                }
             }
-        }
-        else {
+            if (!found) {
+                const newIndex = Object.keys(oldData.pin.meta).length.toString();
+                oldData.pin.meta[newIndex] = obj;
+            }
+        } else {
             oldData = [obj];
         }
         return oldData;
-    },
+    }
+    ,
 
     /**
      * addResponse - Function to add response to a review
@@ -118,8 +147,17 @@ module.exports = {
      * @returns {Object} - JSON data of the reviewer with added response
      */
     addResponse(data, sellerId, responderId, responseText, responderType, name) {
-        const responseIndex = data.sellerReviews.findIndex(review => review.reviewerId === sellerId);
-        if (responseIndex >= 0) {
+        let index;
+        if (typeof data.sellerReviews === 'object') {
+            const matchingId = Object.keys(data.sellerReviews).find((key) => data.sellerReviews[key].reviewerId === sellerId);
+            index = matchingId ? matchingId : -1;
+        }
+        if (index >= 0) {
+            if (!data.sellerReviews[index].hasOwnProperty('responses') || typeof data.sellerReviews[index].responses !== 'object') {
+                data.sellerReviews[index].responses = [];
+            }
+            let newIndex = Object.keys(data.sellerReviews[index].responses).length;
+            
             const response = {
                 responderId,
                 responderName: name,
@@ -127,7 +165,7 @@ module.exports = {
                 responseText,
                 timestamp: new Date()
             };
-            data.sellerReviews[responseIndex].responses.push(response);
+            data.sellerReviews[index].responses[newIndex] = (response);
         }
         return data;
     },
@@ -145,8 +183,17 @@ module.exports = {
      * @returns {Object} - JSON data of the reviewer with added response
      */
     addShopperResponse(data, sellerId, responderId, responseText, responderType, name) {
-        const responseIndex = data.sellerReviews.findIndex(review => review.revieweeId === sellerId);
-        if (responseIndex >= 0) {
+        let index;
+        if (typeof data.sellerReviews === 'object') {
+            console.log("inside")
+            const matchingId = Object.keys(data.sellerReviews).find((key) => data.sellerReviews[key].revieweeId === sellerId);
+            index = matchingId ? matchingId : -1;
+        }
+        if (index >= 0) {
+            if (!data.sellerReviews[index].hasOwnProperty('responses') || typeof data.sellerReviews[index].responses !== 'object') {
+                data.sellerReviews[index].responses = [];
+            }
+            let newIndex = Object.keys(data.sellerReviews[index].responses).length;
             const response = {
                 responderId,
                 responderName: name,
@@ -154,19 +201,19 @@ module.exports = {
                 responseText,
                 timestamp: new Date()
             };
-            data.sellerReviews[responseIndex].responses.push(response);
+            data.sellerReviews[index].responses[newIndex] = (response);
         }
         console.log(data, "fyghjkl")
         return data;
     },
-    
-     /**
-     * This function is used to add a txn hash to a review
-     * @param {Object} JSON - The JSON object of shopper data
-     * @param {Number} hash - The transaction hash
-     * @returns {Object} - Returns the updated JSON object of product data
-     */
-    async addTxn(JSON, hash){
+
+    /**
+    * This function is used to add a txn hash to a review
+    * @param {Object} JSON - The JSON object of shopper data
+    * @param {Number} hash - The transaction hash
+    * @returns {Object} - Returns the updated JSON object of product data
+    */
+    async addTxn(JSON, hash) {
         JSON.txnHash = hash;
         return JSON;
     }

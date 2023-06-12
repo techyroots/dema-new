@@ -74,7 +74,7 @@ module.exports = {
         Contract.viewSellerReview(Number(sellerId)).then(IpfsService.gateway)
       ]);
       // Add the review to the product and update the product, shopper, and seller JSON data
-      const reviewAdded = await productService.addReview(id, JSON.parse(oldProductJSON), reviewerId, reviewText, rating, JSON.parse(oldShopperJSON), sellerId, JSON.parse(oldSellerJSON));
+      const reviewAdded = await productService.addReview(id, (oldProductJSON.pin.meta), reviewerId, reviewText, rating, (oldShopperJSON.pin.meta), sellerId, (oldSellerJSON.pin.meta));
       // Return a response object with a success status and review data
       return res.status(200).json(reviewAdded);
 
@@ -115,7 +115,7 @@ module.exports = {
       const productJSON = await IpfsService.gateway(productHash);
 
       // Add the response to the product
-      const responseAdded = await productService.addResponse(JSON.parse(productJSON), productId, responderId, responseText, responderType, shopperId);
+      const responseAdded = await productService.addResponse(productJSON.pin.meta, productId, responderId, responseText, responderType, shopperId);
 
       // Return a 200 OK response with the updated product data
       return res.status(200).json(responseAdded);
@@ -136,7 +136,7 @@ module.exports = {
     try {
       // Get the product ID from the query parameters
       const productId = req.query.id;
-      
+
       // If the product ID is missing, return a 400 Bad Request response
       if (!productId) {
         return res.status(400).json({
@@ -179,5 +179,5 @@ module.exports = {
       // If the response is not successful, return a 400 Bad Request response with the data
       return res.status(400).json(data)
     }
-  }
+  },
 }

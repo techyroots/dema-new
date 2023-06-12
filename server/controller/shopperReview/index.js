@@ -86,7 +86,7 @@ module.exports = {
                 Contract.viewSellerReview(Number(revieweeId)).then(IpfsService.gateway)
             ]);
             // Add the review using the shopperService.addReview method
-            const reviewAdded = await shopperService.addReview(id, JSON.parse(oldShopperJSON), revieweeId, reviewText, rating, JSON.parse(oldSellerJSON), productId);
+            const reviewAdded = await shopperService.addReview(id, (oldShopperJSON.pin.meta), revieweeId, reviewText, rating, (oldSellerJSON.pin.meta), productId);
             return res.status(200).json(reviewAdded);
 
         } catch (error) {
@@ -130,7 +130,7 @@ module.exports = {
             // Get the JSON data of the shopper review from IPFS
             const shopperJSON = await IpfsService.gateway(shopperHash);
             // Add response
-            const responseAdded = await shopperService.addResponse(JSON.parse(shopperJSON), shopperId, sellerId, responderId, responseText, responderType, productId);
+            const responseAdded = await shopperService.addResponse(shopperJSON.pin.meta, shopperId, sellerId, responderId, responseText, responderType, productId);
             return res.status(200).json(responseAdded);
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message, data: null, error });

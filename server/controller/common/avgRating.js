@@ -5,7 +5,7 @@
  */
 module.exports = {
     async getAverageRating(reviews) {
-      const len = reviews.length;
+      const len = Object.keys(reviews).length;
       if (len === 0) return 0;
       if (len === 1) return Number(reviews[0].rating);
   

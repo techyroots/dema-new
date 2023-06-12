@@ -18,9 +18,9 @@ function getSellerInfoById(id) {
             timeout: 0,
         };
         $.ajax(settings).done(function (response) {
-            console.log(response,"response")
+            console.log(response, "response")
             if (response.success == true) {
-                resolve(response)
+                resolve(response.data)
             } else {
                 resolve([]);
             }
@@ -29,7 +29,7 @@ function getSellerInfoById(id) {
 }
 
 function getAllSellerInfo() {
-    console.log(baseUrl + `/all-seller-review`,"dfcghj")
+    console.log(baseUrl + `/all-seller-review`, "dfcghj")
     return new Promise((resolve, reject) => {
         let settings = {
             url: baseUrl + `/all-seller-review`,
@@ -66,7 +66,7 @@ function sellerReputationScore(id) {
 function onloadReputationScore() {
     let params = new URL(document.location).searchParams;
     let pid = params.get("seller_id");
-    console.log(pid,"df")
+    console.log(pid, "df")
     if (pid) {
         getSellerDetails(pid);
     }
@@ -79,119 +79,106 @@ async function getSellerDetails(id) {
     document.getElementById("reputationBody").innerHTML = ""
     document.getElementById("loader4").style.display = "block";
     let getSellerinfos = await getSellerInfoById(id);
-    console.log(getSellerinfos, "sellerInfo")
+    console.log(getSellerinfos, getSellerinfos.pin.meta.id, "sellerInfo")
     el1 = document.getElementById('allReviewSellers');
     output = "<div class=\"outerbox\">";
-    let getSellerinfo = getSellerinfos.data
-    if(getSellerinfo.sellerReviews.length){
-        for (let i = getSellerinfo.sellerReviews.length; i > 0; i--) {
-            console.log(getSellerinfo.sellerReviews[i - 1].reviewerId, "id")
-            output += "<div class=\"masindfdf\">";
-            output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
-                    <button type ="button" class="" onclick="getShopperData(${getSellerinfo.sellerReviews[i - 1].reviewerId})"> Reviewed By: ${getSellerinfo.sellerReviews[i - 1].reviewerName}</button></div>
+    let getSellerinfo = getSellerinfos.pin.meta
+    if (getSellerinfo.sellerReviews) {
+        for (const key in getSellerinfo.sellerReviews) {
+            if (getSellerinfo.sellerReviews.hasOwnProperty(key)) {
+                const item = getSellerinfo.sellerReviews[key];
+                console.log(item, "id")
+                output += "<div class=\"masindfdf\">";
+                output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
+                    <button type ="button" class="" onclick="getShopperData(${item.reviewerId})"> Reviewed By: ${item.reviewerName}</button></div>
                    
-                    <p>Rating: ${getSellerinfo.sellerReviews[i - 1].rating} </p>
-                    <p>ProductId: ${getSellerinfo.sellerReviews[i - 1].productId} </p>
-                    <p> Comment: ${getSellerinfo.sellerReviews[i - 1].reviewText}</p>
-                    <span class="mt-2 colortext">${(getSellerinfo.sellerReviews[i - 1].timestamp)}</span>`;
-            for (let j = 0; j < getSellerinfo.sellerReviews[i - 1].responses.length; j++) {
-                console.log("fdfdfdfdfdf", getSellerinfo.sellerReviews[i - 1].responses)
-                if (getSellerinfo.sellerReviews[i - 1].responses[j].responseText)
-                    output += `<div id="responseBySeller">
+                    <p>Rating: ${item.rating} </p>
+                    <p>ProductId: ${item.productId} </p>
+                    <p> Comment: ${item.reviewText}</p>
+                    <span class="mt-2 colortext">${(item.timestamp)}</span>`;
+                for (const key1 in item.responses) {
+                    if (item.responses.hasOwnProperty(key1)) {
+                        const item1 = item.responses[key1];
+                        console.log(item1, "itme1")
+                        if (item1.responseText)
+                            output += `<div id="responseBySeller">
                             <div class="client-reviews p-0 m-0">
-                                    <p class="">Response : ${getSellerinfo.sellerReviews[i - 1].responses[j].responderName}</p>
+                                    <p class="">Response : ${item1.responderName}</p>
                             </div>
-                            <p> Comment: ${getSellerinfo.sellerReviews[i - 1].responses[j].responseText}</p>
-                                <span class="mt-2 colortext">${(getSellerinfo.sellerReviews[i - 1].responses[j].timestamp)}</span>
+                            <p> Comment: ${item1.responseText}</p>
+                                <span class="mt-2 colortext">${(item1.timestamp)}</span>
                             </div>`
-            }
+                    }
+                }
 
-            output += `<div class="shopperdiv2"><textarea placeholder="Reply here..." name="" id="reviews2${i - 1}" ></textarea>
-                                <button type="button" id="sellerSubmitBtnResp${i - 1}" onclick="sellerReviewResponse(${id}, ${i - 1},${getSellerinfo.sellerReviews[i - 1].reviewerId}, ${getSellerinfo.sellerReviews[i - 1].productId})">Submit</button>
-                            </div><p id="lengthErrorSellerResponse${i - 1}" style="color: red; margin: 5px 2px 0"></p></div>`;
-            output += "</div>";
+                output += `<div class="shopperdiv2"><textarea placeholder="Reply here..." name="" id="reviews2${key}" ></textarea>
+                                <button type="button" id="sellerSubmitBtnResp${key}" onclick="sellerReviewResponse(${id}, ${key},${item.reviewerId}, ${item.productId})">Submit</button>
+                            </div><p id="lengthErrorSellerResponse${key}" style="color: red; margin: 5px 2px 0"></p></div>`;
+                output += "</div>";
+            }
         }
-        
-    }else{
+
+    } else {
         output += `<tr>No review found</tr>`
     }
     el1.innerHTML = output;
+
     document.getElementById("loader4").style.display = "none";
-    document.getElementById("sellerTxnHash").href = explorer + getSellerinfo.txnHash
-    document.getElementById("sellerIdBox").innerHTML = getSellerinfo.id;
-    document.getElementById("sellerNameBox").innerHTML = getSellerinfo.name;
-    document.getElementById("sellerWalletBox").innerHTML = getSellerinfo.address.slice(0, 4) + "...." + getSellerinfo.address.slice(-5);
-    document.getElementById("sellerHash").innerHTML = `<a href=${getSellerinfos.URL}>SellerInfo</a>`;
-    for (let i = 0; i < getSellerinfo.productReviews.length; i++) {
-        if (getSellerinfo.id == id) {
-            console.log(getSellerinfo.productReviews[i].reviews.length )
-            let avgRating, rating1,rating2,rating3,rating4;
-            if (getSellerinfo.productReviews[i].reviews.length >= 4) {
-                
-                avgRating = (Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) +
-                    Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating) + Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 3].rating)
-                    + Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 4].rating)) / 4
-                
-                rating1 = (getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) 
-                rating2 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating) 
-                rating3 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 3].rating) 
-                rating4 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 4].rating)
-                
-            } else if (getSellerinfo.productReviews[i].reviews.length == 3) {
-               
-                avgRating = (Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) +
-                    Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating) + Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 3].rating)) / 3
-                
-                rating1 = (getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) 
-                rating2 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating) 
-                rating3 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 3].rating) 
-                rating4 =0
-            } else if (getSellerinfo.productReviews[i].reviews.length == 2) {
-                
-                avgRating = (Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) +
-                    Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating)) / 2
-                
-                rating1 = (getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating) 
-                rating2 =(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 2].rating) 
-                rating3 =0
-                rating4 =0
-               
-            } else {
-                
-                avgRating = Number(getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating)
-            
-                rating1 = getSellerinfo.productReviews[i].reviews[getSellerinfo.productReviews[i].reviews.length - 1].rating
-                rating2 =0
-                rating3 =0
-                rating4 =0
-                
+    document.getElementById("sellerTxnHash").href = explorer + getSellerinfos.pin.meta.txnHash
+    document.getElementById("sellerIdBox").innerHTML = getSellerinfos.pin.meta.id;
+    document.getElementById("sellerNameBox").innerHTML = getSellerinfos.pin.meta.name;
+    document.getElementById("sellerWalletBox").innerHTML = getSellerinfos.pin.meta.address.slice(0, 4) + "...." + getSellerinfos.pin.meta.address.slice(-5);
+    document.getElementById("sellerHash").innerHTML = `<a href=${baseUrl + "/seller-review?id=" + getSellerinfos.pin.meta.id}>SellerInfo</a>`;
+
+    if (getSellerinfo.productReviews) {
+        for (const key in getSellerinfo.productReviews) {
+            if (getSellerinfo.productReviews.hasOwnProperty(key)) {
+                const item = getSellerinfo.productReviews[key];
+                console.log(item, "id")
+                if (getSellerinfos.pin.meta.id == id) {
+                    let avgRating, lastFourRatings;
+                    const metaLength = Object.keys(item.reviews).length;
+                    console.log("Length of meta:", metaLength);
+                    const keys = Object.keys(item.reviews);
+                    if (metaLength >= 4) {
+                        avgRating = Object.keys(item.reviews).slice(-4).map((key) => parseFloat(item.reviews[key].rating));
+                        const lastFourKeys = keys.slice(-4);
+                        lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+
+                    } else if (metaLength == 3) {
+                        avgRating = Object.keys(item.reviews).slice(-3).map((key) => parseFloat(item.reviews[key].rating));
+                        const lastFourKeys = keys.slice(-3);
+                        lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                    } else if (metaLength == 2) {
+                        avgRating = Object.keys(item.reviews).slice(-2).map((key) => parseFloat(item.reviews[key].rating));
+                        const lastFourKeys = keys.slice(-2);
+                        lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                    } else {
+                        avgRating = Object.keys(item.reviews).slice(-1).map((key) => parseFloat(item.reviews[key].rating));
+                        const lastFourKeys = keys.slice(-1);
+                        lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                    }
+                    document.getElementById("reputationBody").innerHTML = document.getElementById("reputationBody").innerHTML +
+                        `<tr>
+                            <td> ${item.productId}</td>
+                            <td>${lastFourRatings[0]}</td>
+                            <td>${lastFourRatings[1]}</td>
+                            <td>${lastFourRatings[2]}</td>
+                            <td>${lastFourRatings[3]}</td>
+                            <td>${avgRating}</td>
+                        </tr>`
+                    document.getElementById("sellerDataById").innerHTML = document.getElementById("sellerDataById").innerHTML +
+                        `<tr>
+                            <td onclick="productInfo(${item.productId})">${item.productId}</td>
+                            <td>${metaLength}</td>
+                            <td>${avgRating}</td>
+                        </tr>`;
+                }
             }
-            // console.log(rating,"at")
-            document.getElementById("reputationBody").innerHTML = document.getElementById("reputationBody").innerHTML +
-            `<tr>
-                <td> ${getSellerinfo.productReviews[i].productId}</td>
-                <td>${rating1}</td>
-                <td>${rating2}</td>
-                <td>${rating3}</td>
-                <td>${rating4}</td>
-                <td>${avgRating}</td>
-            </tr>`
-            
-            document.getElementById("sellerDataById").innerHTML = document.getElementById("sellerDataById").innerHTML +
-                `<tr>
-                    <td onclick="productInfo(${getSellerinfo.productReviews[i].productId})">${getSellerinfo.productReviews[i].productId}</td>
-                    <td>${getSellerinfo.productReviews[i].reviews.length}</td>
-                    <td>${avgRating}</td>
-                </tr>`;
-            // document.getElementById("reputationBody").innerHTML = document.getElementById("reputationBody").innerHTML +
-            //     `<tr>
-            //     <td> ${getSellerinfo.productReviews[i].productId}</td>
-            //     <td>${rating}</td>
-            // </tr>`
         }
     }
-    
-    
+
+
 
     $(document).ready(function () {
         //initialize DataTables
@@ -206,17 +193,22 @@ async function getSellerDetails(id) {
 async function allSeller() {
     document.getElementById("sellerData").innerHTML = "";
     document.getElementById("loader1").style.display = "block";
-    let getAllSeller = await getAllSellerInfo()
-    console.log(getAllSeller,"getAll")
+    let getAllData = await getAllSellerInfo();
+    let getAllSeller = (getAllData.pin.meta)
     document.getElementById("loader1").style.display = "none";
-    for (let i = 0; i < getAllSeller.length; i++) {
-        document.getElementById("sellerData").innerHTML = document.getElementById("sellerData").innerHTML +
-            `<tr>
-            <td class="sellerListid" onclick="sellerInfo(${getAllSeller[i].id})">${getAllSeller[i].id}</td>
-            <td>${getAllSeller[i].totalProducts}</td>
-            <td>${getAllSeller[i].totalReviews}</td>
-            <td class='sellerListRepu' onclick="sellerReputationScore(${getAllSeller[i].id} )">${(getAllSeller[i].rating)}</td>
+    for (const key in getAllSeller) {
+        if (getAllSeller.hasOwnProperty(key)) {
+            const item = getAllSeller[key];
+            console.log(item.id, "item")
+
+            document.getElementById("sellerData").innerHTML = document.getElementById("sellerData").innerHTML +
+                `<tr>
+            <td class="sellerListid" onclick="sellerInfo(${item.id})">${item.id}</td>
+            <td>${item.totalProducts}</td>
+            <td>${item.totalReviews}</td>
+            <td class='sellerListRepu' onclick="sellerReputationScore(${item.id} )">${(item.rating)}</td>
         </tr>`;
+        }
     }
     $(document).ready(function () {
         //initialize DataTables
@@ -250,7 +242,7 @@ function getShopperInfoById(id) {
         $.ajax(settings).done(function (response) {
             console.log(response)
             if (response.success == true) {
-                resolve(response)
+                resolve(response.data)
             } else {
                 resolve([]);
             }
@@ -310,41 +302,49 @@ async function getShopperDetails(id) {
     console.log(getShopperinfos, "shopperInfo")
     el1 = document.getElementById('allReviewShoppers');
     output = "<div class=\"outerbox\">";
-    let getShopperinfo = getShopperinfos.data
-    console.log(getShopperinfo,"fcghjk")
-    if(getShopperinfo.sellerToShopperReviews.length){
-        for (let i = getShopperinfo.sellerToShopperReviews.length; i > 0; i--) {
-            console.log(getShopperinfo.sellerToShopperReviews[i - 1].reviewerName, "id")
-            output += "<div class=\"masindfdf\">";
-            output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
-                     <button type ="button" class="" onclick="getSellerData(${getShopperinfo.sellerToShopperReviews[i - 1].reviewerId})"> Reviewed By: ${getShopperinfo.sellerToShopperReviews[i - 1].reviewerName}</button></div>
+    let getShopperinfo = getShopperinfos.pin.meta
+    console.log(getShopperinfo, "fcghjk")
+    if (getShopperinfo.sellerToShopperReviews) {
+        for (const key in getShopperinfo.sellerToShopperReviews) {
+            if (getShopperinfo.sellerToShopperReviews.hasOwnProperty(key)) {
+                const item = getShopperinfo.sellerToShopperReviews[key];
+                console.log(item, "id")
+                output += "<div class=\"masindfdf\">";
+                output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
+                     <button type ="button" class="" onclick="getSellerData(${item.reviewerId})"> Reviewed By: ${item.reviewerName}</button></div>
                      
-                     <p>Rating: ${getShopperinfo.sellerToShopperReviews[i -1].rating} </p>
-                     <p>ProductId: ${getShopperinfo.sellerToShopperReviews[i - 1].productId} </p>
-                     <p> Comment: ${getShopperinfo.sellerToShopperReviews[i - 1].reviewText}</p>
-                     <span class="mt-2 colortext">${(getShopperinfo.sellerToShopperReviews[i - 1].timestamp)}</span>`;
-            for (let j = 0; j < getShopperinfo.sellerToShopperReviews[i -1 ].responses.length; j++) {
-                console.log("fdfdfdfdfdf", getShopperinfo.sellerToShopperReviews[i - 1].responses)
-                if (getShopperinfo.sellerToShopperReviews[i - 1].responses[j].responseText)
-                    output += `<div id="responseBySeller">
+                     <p>Rating: ${item.rating} </p>
+                     <p>ProductId: ${item.productId} </p>
+                     <p> Comment: ${item.reviewText}</p>
+                     <span class="mt-2 colortext">${(item.timestamp)}</span>`;
+                for (const key1 in item.responses) {
+                    if (item.responses.hasOwnProperty(key1)) {
+                        const item1 = item.responses[key1];
+                        console.log(item1, "itme1")
+                        if (item1.responseText)
+                            output += `<div id="responseBySeller">
                             <div class="client-reviews p-0 m-0">
-                                     <p class="">Response : ${getShopperinfo.sellerToShopperReviews[i - 1].responses[j].responderName}</p>
+                                     <p class="">Response : ${item1.responderName}</p>
                              </div>
-                             <p> Comment: ${getShopperinfo.sellerToShopperReviews[i - 1].responses[j].responseText}</p>
-                                <span class="mt-2 colortext">${(getShopperinfo.sellerToShopperReviews[i -1].responses[j].timestamp)}</span>
+                             <p> Comment: ${item1.responseText}</p>
+                                <span class="mt-2 colortext">${(item1.timestamp)}</span>
                             </div>`
+
+                    }
+                }
+
+                output += `<div class="shopperdiv1"><textarea placeholder="Reply here..." name="" id="reviews1${key}" ></textarea>
+                                <button type="button" id="shopperSubmitBtnResp${key}" onclick="shopperReviewResponse(${id}, ${key},${item.reviewerId}, ${item.productId})">Submit</button>
+                             </div><p id="lengthErrorResponse${key}" style="color: red; margin: 5px 2px 0"></p></div>`;
+                output += "</div>";
+
+
             }
-    
-            output += `<div class="shopperdiv1"><textarea placeholder="Reply here..." name="" id="reviews1${i -1 }" ></textarea>
-                                <button type="button" id="shopperSubmitBtnResp${i - 1}" onclick="shopperReviewResponse(${id}, ${i - 1},${getShopperinfo.sellerToShopperReviews[i - 1].reviewerId}, ${getShopperinfo.sellerToShopperReviews[i - 1].productId})">Submit</button>
-                             </div><p id="lengthErrorResponse${i - 1}" style="color: red; margin: 5px 2px 0"></p></div>`;
-            output += "</div>";
-           
         }
-    }else{
+    } else {
         output += `<tr>No review found</tr>`
     }
-   
+
     el1.innerHTML = output;
 
     document.getElementById("loader5").style.display = "none";
@@ -352,56 +352,53 @@ async function getShopperDetails(id) {
     document.getElementById("shopperIdBox").innerHTML = getShopperinfo.id;
     document.getElementById("shopperNameBox").innerHTML = getShopperinfo.name;
     document.getElementById("shopperWalletBox").innerHTML = getShopperinfo.address.slice ? getShopperinfo.address.slice(0, 4) + "...." + getShopperinfo.address.slice(-5) : "";
-    document.getElementById("shopperHash").innerHTML = `<a href=${getShopperinfos.URL}>ShopperInfo</a>`;
-    for (let i = 0; i < getShopperinfo.productReviews.length; i++) {
-        let rating, rating1,rating2,rating3,rating4;
-        if (getShopperinfo.productReviews[i].reviews.length >= 4) {
-            rating1 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating;
-            rating2 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating
-            rating3 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 3].rating
-            rating4 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 4].rating
-            rating = (Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating) +
-                Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating) + Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 3].rating)
-                + Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 4].rating)) / 4
-        } else if (getShopperinfo.productReviews[i].reviews.length == 3) {
-            rating1 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating;
-            rating2 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating
-            rating3 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 3].rating
-            rating4 = 0
-            rating = (Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating) +
-                Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating) + Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 3].rating)) / 3
-        } else if (getShopperinfo.productReviews[i].reviews.length == 2) {
-            rating1 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating;
-            rating2 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating
-            rating3 = 0
-            rating4 = 0
-            rating = (Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating) +
-                Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 2].rating)) / 2
-        } else {
-            rating1 = getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating
-            rating2 = 0
-            rating3 = 0
-            rating4 = 0
-            rating = Number(getShopperinfo.productReviews[i].reviews[getShopperinfo.productReviews[i].reviews.length - 1].rating)
-        }
-        document.getElementById("shopperDataById").innerHTML = document.getElementById("shopperDataById").innerHTML +
-            `<tr>
-            <td onclick="productInfo(${getShopperinfo.productReviews[i].productId})">${getShopperinfo.productReviews[i].productId}</td>
-            <td>${getShopperinfo.productReviews[i].reviews[0].reviewText}</td><td>${getShopperinfo.productReviews[i].reviews[0].rating}</td>
-        </tr>`;
-        
-         document.getElementById("shopper_repu").innerHTML = document.getElementById("shopper_repu").innerHTML +
-            `<tr>
-                <td>${getShopperinfo.productReviews[i].productId}</td>
-                <td>${rating1}</td>
-                <td>${rating2}</td>
-                <td>${rating3}</td>
-                <td>${rating4}</td>
+    document.getElementById("shopperHash").innerHTML = `<a href=${baseUrl + "/shopper-review?id=" + getShopperinfo.id}>ShopperInfo</a>`;
+    if (getShopperinfo.productReviews) {
+        for (const key in getShopperinfo.productReviews) {
+            if (getShopperinfo.productReviews.hasOwnProperty(key)) {
+                const item = getShopperinfo.productReviews[key];
+                console.log(item, "id")
+                let lastFourRatings, rating;
+                const metaLength = Object.keys(item.reviews).length;
+                console.log("Length of meta:", metaLength);
+                const keys = Object.keys(item.reviews);
+                if (metaLength >= 4) {
+                    rating = Object.keys(item.reviews).slice(-4).map((key) => parseFloat(item.reviews[key].rating));
+                    const lastFourKeys = keys.slice(-4);
+                    lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating)
+                } else if (metaLength == 3) {
+                    rating = Object.keys(item.reviews).slice(-3).map((key) => parseFloat(item.reviews[key].rating));
+                    const lastFourKeys = keys.slice(-3);
+                    lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                } else if (metaLength == 2) {
+                    rating = Object.keys(item.reviews).slice(-2).map((key) => parseFloat(item.reviews[key].rating));
+                    const lastFourKeys = keys.slice(-2);
+                    lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                } else {
+                    rating = Object.keys(item.reviews).slice(-1).map((key) => parseFloat(item.reviews[key].rating));
+                    const lastFourKeys = keys.slice(-1);
+                    lastFourRatings = lastFourKeys.map((key) => item.reviews[key].rating);
+                }
+                document.getElementById("shopperDataById").innerHTML = document.getElementById("shopperDataById").innerHTML +
+                    `<tr>
+                        <td onclick="productInfo(${item.productId})">${item.productId}</td>
+                        <td>${item.reviews[0].reviewText}</td><td>${item.reviews[0].rating}</td>
+                    </tr>`;
+
+                document.getElementById("shopper_repu").innerHTML = document.getElementById("shopper_repu").innerHTML +
+                    `<tr>
+                <td>${item.productId}</td>
+                <td>${lastFourRatings[0]}</td>
+                <td>${lastFourRatings[1]}</td>
+                <td>${lastFourRatings[2]}</td>
+                <td>${lastFourRatings[3]}</td>
                 <td>${rating}</td>
             </tr>`
-        
+            }
+
+        }
     }
-    
+
     $(document).ready(function () {
         //initialize DataTables
         $("#example5").DataTable({
@@ -415,16 +412,20 @@ async function getShopperDetails(id) {
 async function allShopper() {
     document.getElementById("shopperData").innerHTML = "";
     document.getElementById("loader2").style.display = "block";
-    let getAllShopper = await getAllShopperInfo();
+    let getAllData = await getAllShopperInfo();
+    let getAllShopper = (getAllData.pin.meta)
     document.getElementById("loader2").style.display = "none";
-    for (let i = 0; i < getAllShopper.length; i++) {
-        document.getElementById("shopperData").innerHTML = document.getElementById("shopperData").innerHTML +
-            `<tr>
-            <td class='shopperListid' onclick="shopperInfo(${getAllShopper[i].id})">${getAllShopper[i].id}</td>
-            <td>${getAllShopper[i].totalProducts}</td>
-            <td>${getAllShopper[i].totalReviews}</td>
-            <td class='shopperListRepu' onclick="shopperReputationScore(${getAllShopper[i].id})">${getAllShopper[i].rating}</td>
+    for (const key in getAllShopper) {
+        if (getAllShopper.hasOwnProperty(key)) {
+            const item = getAllShopper[key];
+            document.getElementById("shopperData").innerHTML = document.getElementById("shopperData").innerHTML +
+                `<tr>
+            <td class='shopperListid' onclick="shopperInfo(${item.id})">${item.id}</td>
+            <td>${item.totalProducts}</td>
+            <td>${item.totalReviews}</td>
+            <td class='shopperListRepu' onclick="shopperReputationScore(${item.id})">${item.rating}</td>
         </tr>`;
+        }
     }
     $(document).ready(function () {
         //initialize DataTables
@@ -457,7 +458,7 @@ function getProductReviewById(id) {
         $.ajax(settings).done(function (response) {
             console.log(response)
             if (response.success == true) {
-                resolve(response)
+                resolve(response.data)
             } else {
                 resolve([]);
             }
@@ -514,68 +515,79 @@ async function getProductDetails(id) {
     document.getElementById("allReviewProduct").innerHTML = "";
     let productInfo = await getProductReviewById(id);
     console.log(productInfo, "productInfo")
-    document.getElementById("productTitle").innerHTML = productInfo.data.productName;
-    document.getElementById("productTxnHash").href = explorer + productInfo.data.txnHash;
-    document.getElementById("productDesp").innerHTML = productInfo.data.productDescription;
-    document.getElementById("productRating").innerHTML = productInfo.data.avgRating ? (productInfo.data.avgRating) : 0;
-    document.getElementById("productSellerBy").innerHTML = "Sell by " + productInfo.data.sellerName;
-    document.getElementById("getsellerID").innerHTML = productInfo.data.sellerId;
-    document.getElementById("imgIPFS").src = productInfo.imageURL;
-    document.getElementById("productHash").href = productInfo.URL;
-    let rating = productInfo.data.avgRating
+    document.getElementById("productTitle").innerHTML = productInfo.pin.meta.productName;
+    document.getElementById("productTxnHash").href = explorer + productInfo.pin.meta.txnHash;
+    document.getElementById("productDesp").innerHTML = productInfo.pin.meta.productDescription;
+    document.getElementById("productRating").innerHTML = productInfo.pin.meta.avgRating ? (productInfo.pin.meta.avgRating) : 0;
+    document.getElementById("productSellerBy").innerHTML = "Sell by " + productInfo.pin.meta.sellerName;
+    document.getElementById("getsellerID").innerHTML = productInfo.pin.meta.sellerId;
+    // document.getElementById("imgIPFS").src = await getImage(productInfo.pin.meta.productImage);
+    document.getElementById("productHash").href = baseUrl + "/product-review?id=" + productInfo.pin.meta.productId;
+    let rating = productInfo.pin.meta.avgRating
     for (let i = 0; i < rating; i++) {
         document.getElementById("ratingStar").innerHTML += `<i class="bi bi-star-fill"></i>`;
     }
-    document.getElementById("productSellerBy").setAttribute("onclick", `getSellerData(${productInfo.data.sellerId})`);
-    
+    document.getElementById("productSellerBy").setAttribute("onclick", `getSellerData(${productInfo.pin.meta.sellerId})`);
+
     el1 = document.getElementById('allReviewProduct');
     output = "<div class=\"outerbox\">";
-    if(productInfo.data.reviews.length){
-        for (let i = productInfo.data.reviews.length; i > 0; i--) {
-            console.log(productInfo.data.reviews,"fcghbjk")
-            output += "<div class=\"masindfdf\">";
-            output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
-                <button type ="button" class="" onclick="getShopperData(${productInfo.data.reviews[i - 1].reviewerId})"> Reviewed By: ${productInfo.data.reviews[i -1 ].reviewerName}</button></div>
+    if (productInfo.pin.meta.reviews) {
+        for (const key in productInfo.pin.meta.reviews) {
+            if (productInfo.pin.meta.reviews.hasOwnProperty(key)) {
+                const item = productInfo.pin.meta.reviews[key];
+                console.log(item, "id")
+                output += "<div class=\"masindfdf\">";
+                output += `<div class="reviewsdjn"><div class="client-reviews p-0 m-0">
+                <button type ="button" class="" onclick="getShopperData(${item.reviewerId})"> Reviewed By: ${item.reviewerName}</button></div>
                
-                <p>Rating: ${productInfo.data.reviews[i -1].rating} </p>
-                <p> Comment: ${productInfo.data.reviews[i -1].reviewText}</p>
-                <span class="mt-2 colortext">${(productInfo.data.reviews[i - 1].timestamp)}</span>`;
-            for (let j = 0; j < productInfo.data.reviews[i - 1].responses.length; j++) {
-                console.log("fdfdfdfdfdf", productInfo.data.reviews[i-1].responses)
-                if (productInfo.data.reviews[i - 1].responses[j].responseText)
-                    output += `<div id="responseBySeller">
+                <p>Rating: ${item.rating} </p>
+                <p> Comment: ${item.reviewText}</p>
+                <span class="mt-2 colortext">${(item.timestamp)}</span>`;
+                for (const key1 in item.responses) {
+                    if (item.responses.hasOwnProperty(key1)) {
+                        const item1 = item.responses[key1];
+                        console.log(item1, "itme1")
+                        if (item1.responseText)
+                            output += `<div id="responseBySeller">
                             <div class="client-reviews p-0 m-0">
-                                    <p class="">Response : ${productInfo.data.reviews[i - 1].responses[j].responderName}</p>
+                                    <p class="">Response : ${item1.responderName}</p>
                             </div>
-                            <p> Comment: ${productInfo.data.reviews[i - 1].responses[j].responseText}</p>
-                                <span class="mt-2 colortext">${(productInfo.data.reviews[i - 1].responses[j].timestamp)}</span>
+                            <p> Comment: ${item1.responseText}</p>
+                                <span class="mt-2 colortext">${(item1.timestamp)}</span>
                             </div>`
+                    }
+                }
+
+                output += `<div class="shopperdiv"><textarea placeholder="Reply here..." name="" id="reviews${key}" ></textarea>
+                                <button type="button" id="productSubmitBtnResp${key}" onclick="productReviewResponse(${key},${item.reviewerId})">Submit</button>
+                            </div><p id="lengthErrorResp${key}" style="color: red; margin: 5px 2px 0"></p></div>`;
+                output += "</div>";
             }
-    
-            output += `<div class="shopperdiv"><textarea placeholder="Reply here..." name="" id="reviews${i - 1}" ></textarea>
-                                <button type="button" id="productSubmitBtnResp${i - 1}" onclick="productReviewResponse(${i - 1},${productInfo.data.reviews[i - 1].reviewerId})">Submit</button>
-                            </div><p id="lengthErrorResp${i - 1}" style="color: red; margin: 5px 2px 0"></p></div>`;
-            output += "</div>";
         }
-    }else{
+    } else {
         output += `<tr>No review found</tr>`
     }
-    
+
     el1.innerHTML = output;
 }
 
 async function allProduct() {
     document.getElementById("productData").innerHTML = "";
     document.getElementById("loader3").style.display = "block";
-    let getAllProduct = await getAllProductInfo();
+    let getAllData = await getAllProductInfo();
+    let getAllProduct = (getAllData.pin.meta)
+    console.log(getAllProduct, "getaa")
     document.getElementById("loader3").style.display = "none";
-    for (let i = 0; i < getAllProduct.length; i++) {
-        document.getElementById("productData").innerHTML = document.getElementById("productData").innerHTML +
-            `<tr>
-            <td class='productListid' onclick="productInfo(${getAllProduct[i].id})">${getAllProduct[i].id}</td>
-            <td>${getAllProduct[i].totalReviews}</td>
-            <td>${getAllProduct[i].rating}</td>
+    for (const key in getAllProduct) {
+        if (getAllProduct.hasOwnProperty(key)) {
+            const item = getAllProduct[key];
+            document.getElementById("productData").innerHTML = document.getElementById("productData").innerHTML +
+                `<tr>
+            <td class='productListid' onclick="productInfo(${item.id})">${item.id}</td>
+            <td>${item.totalReviews}</td>
+            <td>${item.rating}</td>
         </tr>`;
+        }
     }
     $(document).ready(function () {
         //initialize DataTables
@@ -648,7 +660,7 @@ function shopperToSellerReview(text) {
                             document.getElementById("productSubmitBtn_seller").disabled = true;
                             document.getElementById("productSubmitBtn_seller").innerHTML = "Submiting...";
 
-                            let postReview = await postSellerReview(3,  document.getElementById("getsellerID").innerHTML, text,  getSelectedValue.value, pid)
+                            let postReview = await postSellerReview(2, document.getElementById("getsellerID").innerHTML, text, getSelectedValue.value, pid)
                             console.log(postReview, "Post")
                             if (postReview.success == true) {
 
@@ -703,9 +715,9 @@ function postProductReview(id, sellerId, reviewerId, reviewText, rating) {
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            data: {               
-                id: id,        
-                sellerId: sellerId,               
+            data: {
+                id: id,
+                sellerId: sellerId,
                 reviewerId: reviewerId,
                 reviewText: reviewText,
                 rating: rating
@@ -755,7 +767,7 @@ async function shopperToProductReview(text) {
                                 document.getElementById("productSubmitBtn").disabled = true;
                                 document.getElementById("productSubmitBtn").innerHTML = "Submiting...";
                                 console.log("getSelectedValue", getSelectedValue.value);
-                                let postReview = await postProductReview(pid, res.data.sellerId, 1, text, getSelectedValue.value)
+                                let postReview = await postProductReview(pid, res.pin.meta.sellerId, 2, text, getSelectedValue.value)
 
                                 if (postReview.success == true) {
                                     Swal.fire({
@@ -803,7 +815,7 @@ function postShopperReview(id, reviewerId, reviewText, rating, productId) {
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            data: {             
+            data: {
                 id: id,
                 productId: productId,
                 rating: rating,
@@ -853,7 +865,7 @@ async function sellerToShopperReview(text) {
                             document.getElementById("shoppersSubmitBtn").disabled = true;
                             document.getElementById("shoppersSubmitBtn").innerHTML = "Submiting...";
 
-                            let postReview = await postShopperReview(document.getElementById("getsellerID").innerHTML, 3, text, getSelectedValue.value, pid)
+                            let postReview = await postShopperReview(document.getElementById("getsellerID").innerHTML, 1, text, getSelectedValue.value, pid)
                             console.log(postReview, "Post")
                             if (postReview.success == true) {
 
@@ -899,8 +911,8 @@ async function sellerToShopperReview(text) {
 
 //-------------------------------------------Shopper/Seller give response on product review------------------------------//
 
-function postProductReviewResponse(id,  responderId, responseText, responderType, shopperId) {
-    console.log(id,  responderId, responseText, responderType, shopperId,"id,  responderId, responseText, responderType, shopperId")
+function postProductReviewResponse(id, responderId, responseText, responderType, shopperId) {
+    console.log(id, responderId, responseText, responderType, shopperId, "id,  responderId, responseText, responderType, shopperId")
     return new Promise((resolve, reject) => {
         let settings = {
             url: baseUrl + "/product-response",
@@ -981,7 +993,7 @@ async function productReviewResponse(id, shopperId) {
 
 //-------------------------------------------Shopper/Seller give response on shopper review------------------------------//
 
-function postShopperReviewResponse(id, responderId,   responseText,  responderType, sellerId, productId) {
+function postShopperReviewResponse(id, responderId, responseText, responderType, sellerId, productId) {
     return new Promise((resolve, reject) => {
         let settings = {
             url: baseUrl + "/shopper-response",
@@ -995,8 +1007,8 @@ function postShopperReviewResponse(id, responderId,   responseText,  responderTy
                 responderId: responderId,
                 responseText: responseText,
                 responderType: responderType,
-                productId : productId,
-                sellerId : sellerId
+                productId: productId,
+                sellerId: sellerId
             }
         }
         $.ajax(settings).done(function (response) {
@@ -1062,7 +1074,7 @@ async function shopperReviewResponse(shopperId, id, sellerId, productId) {
 
 //-------------------------------------------Shopper/Seller give response on seller review------------------------------//
 
-function postSellerReviewResponse(id, shopperId, responderId, responseText, responderType,   productId) {
+function postSellerReviewResponse(id, shopperId, responderId, responseText, responderType, productId) {
     return new Promise((resolve, reject) => {
         let settings = {
             url: baseUrl + "/seller-response",
@@ -1076,8 +1088,8 @@ function postSellerReviewResponse(id, shopperId, responderId, responseText, resp
                 responderId: responderId,
                 responseText: responseText,
                 responderType: responderType,
-                productId : productId,
-                shopperId : shopperId
+                productId: productId,
+                shopperId: shopperId
             }
         }
         $.ajax(settings).done(function (response) {

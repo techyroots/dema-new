@@ -1,101 +1,57 @@
-// Load environment variables from .env file
-const dotenv = require("dotenv");
-dotenv.config();
+const axios = require('axios'); // Importing the axios library for making HTTP requests
+const qs = require('qs'); // Importing the qs library for serializing request data
+const crypto = require('crypto'); // Importing the crypto module for hashing
 
-// Load AWS SDK and fs module
-const AWS = require('aws-sdk');
-const fs = require('fs');
-
-//Retrieve values from .env file which is required.
-const accessKeyId = process.env.accessKeyId;
-const secretAccessKey = process.env.secretAccessKey;
-const endpoint = process.env.endpoint;
-const bucketName = process.env.bucketName;
-
+const multihashes = require('multihashes'); // Importing the multihashes library for encoding and decoding multihashes
 
 module.exports = {
-    /**
-     * Uploads a JSON object to an S3 bucket and returns a Promise that resolves to the data
-     * @param {string} objectKey - the key for the S3 object
-     * @param {string} filename - the name of the file containing the JSON object
-     * @returns {Promise<object>} a Promise that resolves to the uploaded data
-     */
-    pinJSONToIPFS (objectKey, filename) {
-        console.log(objectKey)
+    // Function to pin JSON data to IPFS
+    pinJSONToIPFS(data) {
+        let config = {
+            method: 'post', // HTTP method set to POST
+            maxBodyLength: Infinity, // Maximum allowed request body length
+            url: 'https://api.filebase.io/v1/ipfs/pins', // IPFS API endpoint URL
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded', // Request content type
+                'Authorization': 'Bearer MzhFNjYxOURFRTkxODE4MTg2RjY6N1FYbFFxVzh4enlxV3F2bTA0RWFjQmtxWHhtcUJsbElIdjQ1ck9IVDpkZW1hLXJlcHV0YXRpb24=', // Authorization token
+            },
+            data: (data) // Data to be pinned to IPFS
+        };
         return new Promise((resolve, reject) => {
-            // Initialize the S3 client
-            const s3 = new AWS.S3({
-                accessKeyId,
-                secretAccessKey,
-                endpoint,
-                s3ForcePathStyle: true,
-            });
-            // Set the upload parameters
-            const uploadParams = {
-                Bucket: bucketName,
-                Key: objectKey,
-                Body: fs.readFileSync(`./${filename}`),
-                ContentType: 'application/json',
-            };
-            // Upload the file to S3
-            s3.upload(uploadParams, (err, data) => {
-                if (err) {
-                  console.log('Error:', err);
-                  reject(err);
-                } else {
-                  resolve(data);
-                }
-            });
-        })
+            axios.request(config) // Making a request to pin the JSON data to IPFS
+                .then((response) => {
+                    resolve(response.data); // Resolving the promise with the response data
+                })
+                .catch((error) => {
+                    reject(error); // Rejecting the promise with the error
+                });
+        });
     },
-    /**
-     * Retrieves a JSON object from an S3 bucket and returns a Promise that resolves to the object
-     * @param {string} objectKey - the key for the S3 object
-     * @returns {Promise<string>} a Promise that resolves to the retrieved object as a string
-     */
-    gateway(objectKey) {
+    // Function to retrieve data from IPFS using the object key
+    gateway(objectkey) {
+        let config = {
+            method: 'get', // HTTP method set to GET
+            maxBodyLength: Infinity, // Maximum allowed request body length
+            url: 'https://api.filebase.io/v1/ipfs/pins/' + objectkey, // IPFS API endpoint URL with object key
+            headers: {
+                'Authorization': 'Bearer MzhFNjYxOURFRTkxODE4MTg2RjY6N1FYbFFxVzh4enlxV3F2bTA0RWFjQmtxWHhtcUJsbElIdjQ1ck9IVDpkZW1hLXJlcHV0YXRpb24=' // Authorization token
+            }
+        };
         return new Promise((resolve, reject) => {
-            // Initialize the S3 client
-            const s3 = new AWS.S3({
-                accessKeyId,
-                secretAccessKey,
-                endpoint,
-                s3ForcePathStyle: true,
-            });
-             // Retrieve the file from S3
-            s3.getObject({Bucket: process.env.bucketName, Key: objectKey}, (err, data) => {
-                if (err) {
-                    console.error(err);
-                    reject(err);;
-                }else{
-                    resolve(data.Body.toString());
-                }              
-            });
-        })
+            axios.request(config) // Making a request to retrieve data from IPFS
+                .then((response) => {
+                    resolve(response.data); // Resolving the promise with the response data
+                })
+                .catch((error) => {
+                    reject(error); // Rejecting the promise with the error
+                });
+        });
     },
-    /**
-     * Retrieves a pre-signed URL for downloading a file from an S3 bucket and returns a Promise that resolves to the URL
-     * @param {string} objectKey - the key for the S3 object
-     * @returns {Promise<string>} a Promise that resolves to the pre-signed URL
-     */
-    getImageURL(objectKey){
-        return new Promise((resolve, reject) => {
-            // Initialize the S3 client
-            const s3 = new AWS.S3({
-                accessKeyId,
-                secretAccessKey,
-                endpoint,
-                s3ForcePathStyle: true,
-            });
-            // Generate a pre-signed URL for the file
-            s3.getSignedUrl("getObject", { Bucket: bucketName, Key: objectKey, Expires: 3600 }, (err, data) => {
-                if (err) {
-                    console.error(err);
-                    reject(err);;
-                }else{
-                    resolve(data);
-                }              
-            });
-        })
-    }
-}
+    // Function to generate a CID (Content Identifier) for a given content
+    async generateCID(content) {
+        const hash = crypto.createHash('sha256').update(content).digest(); // Creating a SHA256 hash of the content
+        const multihash = multihashes.encode(hash, 'sha2-256'); // Encoding the hash using 'sha2-256' algorithm
+        const cid = multihashes.toB58String(multihash); // Converting the multihash to a base58-encoded CID string
+        return cid; // Returning the generated CID
+    },
+};

@@ -2,10 +2,6 @@
 const IpfsService = require("../ipfs/service");
 // Import the contract module
 const Contract = require("../contract/index");
-// Import the file system module
-const fs = require("fs");
-// Import the path module
-const path = require("path");
 // Import the product review utilities module
 const productUtils = require("./../productReview/utils");
 // Import the shopper review utilities module
@@ -14,60 +10,68 @@ const shopperUtils = require("./../shopperReview/utils");
 const sellerUtils = require("./../sellerReview/utils");
 
 module.exports = {
-  /**
-   * Uploads a review to IPFS.
-   * @param {string} type - The type of review to upload ('Product', 'Shopper', or 'Seller').
-   * @param {Object} review - The review object to upload.
-   * @param {string} id - The ID of the review to upload.
-   * @returns {Array} An array of two keys representing the IPFS hash of the uploaded review and the IPFS hash of all reviews of the same type.
-   * @throws {Error} If an invalid review type is provided.
-   */
+  // Function to upload a review
   async uploadReview(type, review, id) {
-    // Initialize variables
     let oldReviews = [];
-    let filename = "";
     let allReviews = [];
-    let oldReview;
-
-    // Switch based on the type of review
+    let typeCID;
+    let isUploaded;
     switch (type) {
       case "Product":
-        // Set filename and get old reviews for product review
-        filename = "product.json";
-        oldReview = await Contract.getAllProductReview();
-        console.log(oldReview,"oldReview")
-        if (!oldReview.length || (oldReview != "" && oldReview != 0)) {
-          console.log("inside")
-          oldReviews = (await IpfsService.gateway(oldReview));
+        // Get all previous product reviews from the contract
+        let productOldReview = await Contract.getAllProductReview();
+        // Generate a unique CID for the product review
+        typeCID = await IpfsService.generateCID(type + id + Math.floor(Date.now() / 1000));
+        if (!productOldReview.length || (productOldReview != "" && productOldReview != 0)) {
+          // Retrieve old reviews from IPFS if they exist
+          oldReviews = await IpfsService.gateway(productOldReview);
         }
-        // Generate all product reviews with new review and update old reviews
-        allReviews = productUtils.allProduct(oldReviews, review, type + id);
-        break;
-
-      case "Shopper":
-        // Set filename and get old reviews for shopper review
-        filename = "shopper.json";
-        oldReview = await Contract.getAllShopperReview();
-        if (!oldReview.length || (oldReview != "" && oldReview != 0)) {
-          oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
-        }
-        // Generate all shopper reviews with new review and update old reviews
-        allReviews = await shopperUtils.allShopper(
-          oldReviews,
-          review,
-          type + id
-        );
+        let productReview = {
+          'cid': typeCID,
+          'meta': review
+        };
+        // Upload the new product review to IPFS
+        isUploaded = await IpfsService.pinJSONToIPFS(productReview);
+        // Generate all product reviews with the new review and update the old reviews
+        allReviews = productUtils.allProduct(oldReviews, review, isUploaded.requestid);
         break;
 
       case "Seller":
-        // Set filename and get old reviews for seller review
-        filename = "seller.json";
-        oldReview = await Contract.getAllSellerReview();
-        if (!oldReview.length || (oldReview != "" && oldReview != 0)) {
-          oldReviews = JSON.parse(await IpfsService.gateway(oldReview));
+        // Get all previous seller reviews from the contract
+        let sellerOldReview = await Contract.getAllSellerReview();
+        // Generate a unique CID for the seller review
+        typeCID = await IpfsService.generateCID(type + id + Math.floor(Date.now() / 1000));
+        if (!sellerOldReview.length || (sellerOldReview != "" && sellerOldReview != 0)) {
+          // Retrieve old reviews from IPFS if they exist
+          oldReviews = await IpfsService.gateway(sellerOldReview);
         }
-        // Generate all seller reviews with new review and update old reviews
-        allReviews = sellerUtils.allSeller(oldReviews, review, type + id);
+        let sellerReview = {
+          'cid': typeCID,
+          'meta': review
+        };
+        // Upload the new seller review to IPFS
+        isUploaded = await IpfsService.pinJSONToIPFS(sellerReview);
+        // Generate all seller reviews with the new review and update the old reviews
+        allReviews = sellerUtils.allSeller(oldReviews, review, isUploaded.requestid);
+        break;
+
+      case "Shopper":
+        // Get all previous shopper reviews from the contract
+        let shopperOldReview = await Contract.getAllShopperReview();
+        // Generate a unique CID for the shopper review
+        typeCID = await IpfsService.generateCID(type + id + Math.floor(Date.now() / 1000));
+        if (!shopperOldReview.length || (shopperOldReview != "" && shopperOldReview != 0)) {
+          // Retrieve old reviews from IPFS if they exist
+          oldReviews = await IpfsService.gateway(shopperOldReview);
+        }
+        let shopperReview = {
+          'cid': typeCID,
+          'meta': review
+        };
+        // Upload the new shopper review to IPFS
+        isUploaded = await IpfsService.pinJSONToIPFS(shopperReview);
+        // Generate all shopper reviews with the new review and update the old reviews
+        allReviews = await shopperUtils.allShopper(oldReviews, review, isUploaded.requestid);
         break;
 
       default:
@@ -75,66 +79,34 @@ module.exports = {
         throw new Error("Invalid review type");
     }
 
-    // Write the new review to a file and upload it to IPFS
-    fs.writeFileSync(
-      path.join(__dirname, `../../../${filename}`),
-      JSON.stringify(review)
-    );
-    // type + id is the hash where type means product, seller or shopper and id means id of product, shopper and seller
-    const isUploaded = await IpfsService.pinJSONToIPFS( path.join(__dirname, `../../../${filename}`));
-
-    // Write the updated reviews to a file and upload it to IPFS
-    fs.writeFileSync(
-      path.join(__dirname, `../../../All${filename}`),
-      JSON.stringify(allReviews)
-    );
-    const isUploadedAll = await IpfsService.pinJSONToIPFS(
-      path.join(__dirname, `../../../All${filename}`)
-    );
-
-    // Return an array containing the IPFS hash of the uploaded review and the IPFS hash of all reviews of the same type
-    return [isUploaded.key, isUploadedAll.key];
+    let AllReview;
+    let AllTypeCID = await IpfsService.generateCID("All" + type + Math.floor(Date.now() / 1000));
+    if (oldReviews.length == 0)
+      AllReview = {
+        'cid': AllTypeCID,
+        'meta': allReviews
+      };
+    else {
+      AllReview = {
+        'cid': AllTypeCID,
+        'meta': allReviews.pin.meta
+      };
+    }
+    // Upload the combined reviews to IPFS
+    const isUploadedAll = await IpfsService.pinJSONToIPFS(AllReview);
+    return [isUploaded.requestid, isUploadedAll.requestid];
   },
 
-  async updateTxnHash(type, review, id) {
-    // Initialize variables
-    let filename = "";
-  
-    // Switch based on the type of review
-    switch (type) {
-      case "Product":
-        // Set filename for product review
-        filename = "product.json";
-        break;
-  
-      case "Shopper":
-        // Set filename for shopper review
-        filename = "shopper.json";
-        break;
-  
-      case "Seller":
-        // Set filename for seller review
-        filename = "seller.json";
-        break;
-  
-      default:
-        // Throw an error if an invalid review type is provided
-        throw new Error("Invalid review type");
-    }
-  
-    // Write the new review to a file
-    fs.writeFileSync(
-      path.join(__dirname, `../../../${filename}`),
-      JSON.stringify(review)
-    );
-  
-    // Upload the file to IPFS and get the IPFS hash
-    const isUploaded = await IpfsService.pinJSONToIPFS(
-      path.join(__dirname, `../../../${filename}`)
-    );
-  
+  // Function to update the transaction hash for a review
+  async updateTxnHash(review, id) {
+    let typeCID = await IpfsService.generateCID(id + Math.floor(Date.now() / 1000));
+    let Review = {
+      'cid': typeCID,
+      'meta': review
+    };
+    // Upload the updated review to IPFS
+    const isUploaded = await IpfsService.pinJSONToIPFS(Review);
     // Return an array containing the IPFS hash of the uploaded review
-    return [isUploaded.key];
+    return isUploaded.requestid;
   }
-  ,
 };
