@@ -6,11 +6,7 @@ To start the node js application run `node dema` command.
 
 Both frontend and backend in NodeJS. Means, we serve frontend through node.
 
-You have to add .env file in your code
-
-RPC = https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78
-private_key= ''
-
+Please add your wallet private key (in which you have funds) in .env file
 
 
 Frontend URL:- http://localhost:7777/dema/
