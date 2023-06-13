@@ -681,7 +681,7 @@ function shopperToSellerReview(text) {
                             document.getElementById("productSubmitBtn_seller").disabled = true;
                             document.getElementById("productSubmitBtn_seller").innerHTML = "Submiting...";
 
-                            let postReview = await postSellerReview(2, document.getElementById("getsellerID").innerHTML, text, getSelectedValue.value, pid)
+                            let postReview = await postSellerReview(3, document.getElementById("getsellerID").innerHTML, text, getSelectedValue.value, pid)
                             console.log(postReview, "Post")
                             if (postReview.success == true) {
 
@@ -788,7 +788,7 @@ async function shopperToProductReview(text) {
                                 document.getElementById("productSubmitBtn").disabled = true;
                                 document.getElementById("productSubmitBtn").innerHTML = "Submiting...";
                                 console.log("getSelectedValue", getSelectedValue.value);
-                                let postReview = await postProductReview(pid, res.pin.meta.sellerId, 2, text, getSelectedValue.value)
+                                let postReview = await postProductReview(pid, res.pin.meta.sellerId, 3, text, getSelectedValue.value)
 
                                 if (postReview.success == true) {
                                     Swal.fire({
@@ -886,7 +886,7 @@ async function sellerToShopperReview(text) {
                             document.getElementById("shoppersSubmitBtn").disabled = true;
                             document.getElementById("shoppersSubmitBtn").innerHTML = "Submiting...";
 
-                            let postReview = await postShopperReview(document.getElementById("getsellerID").innerHTML, 1, text, getSelectedValue.value, pid)
+                            let postReview = await postShopperReview(document.getElementById("getsellerID").innerHTML, 3, text, getSelectedValue.value, pid)
                             console.log(postReview, "Post")
                             if (postReview.success == true) {
 
