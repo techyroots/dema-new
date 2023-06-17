@@ -1,7 +1,7 @@
 //Import Web3 Module
 const Web3 = require("web3");
-const dotenv = require("dotenv");
-dotenv.config();
+const dotenv = require("dotenv"); // Import the dotenv module
+dotenv.config(); // Load environment variables from the .env file
 // Contract Address
 const address = "0x357468999f78463F56b129b29bf1EA0544890980";
 //Contract ABI
